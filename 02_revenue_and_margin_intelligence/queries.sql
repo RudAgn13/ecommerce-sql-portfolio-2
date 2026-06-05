@@ -94,6 +94,7 @@ select
 	customer_id,
     sum(net_amount) revenue
 from orders
+where order_status = 'delivered'
 group by customer_id
 )
 select
