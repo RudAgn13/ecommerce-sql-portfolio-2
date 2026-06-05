@@ -33,7 +33,8 @@ with RFM as
 (
 select
 	o.customer_id,
-    current_date - max(o.order_date)::date recency,
+    (select max(order_date)::date from orders) - max(o.order_date)::date recency,
+	-- using (select max(order_date)::date from orders) instead of current_date for static and sensible querying
     count(distinct o.order_id) frequency,
     sum(o.net_amount) monetary
 from orders o
@@ -106,3 +107,22 @@ where months_since_first between 0 and 6
 order by cohort_month, months_since_first;
 
 -- METRIC 5: CHURN RISK FLAGGING
+select
+	o.customer_id,
+    (select max(order_date)::date from orders) - max(o.order_date)::date days_since_last_order,
+    -- using (select max(order_date)::date from orders) instead of current_date for static and sensible querying
+    case
+    	when (select max(order_date)::date from orders) - max(o.order_date)::date >= 180 then 'Churned'
+        when (select max(order_date)::date from orders) - max(o.order_date)::date between 90 and 179 then 'Churning'
+        when (select max(order_date)::date from orders) - max(o.order_date)::date between 60 and 89 then 'Early Churn Risk'
+    end bucket,
+    c.tier,
+    c.acquisition_channel,
+    count(distinct o.order_id) total_orders,
+    sum(o.net_amount) total_spend
+from orders o
+join customers c on o.customer_id = c.customer_id
+where o.order_status = 'delivered'
+group by o.customer_id, c.tier, c.acquisition_channel
+having (select max(order_date)::date from orders) - max(o.order_date)::date >= 60
+order by total_spend desc;
