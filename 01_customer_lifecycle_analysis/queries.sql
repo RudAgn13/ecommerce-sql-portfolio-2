@@ -69,10 +69,10 @@ join RFM2 t2 on t1.customer_id = t2.customer_id
 )
 select
 	segment,
-    count(customer_id),
-    round(avg(recency),2),
-    round(avg(frequency),2),
-    round(avg(monetary),2)
+    count(customer_id) customers_by_segment,
+    round(avg(recency),2) avg_recency,
+    round(avg(frequency),2) avg_frequency,
+    round(avg(monetary),2) avg_monetary
 from final
 group by segment;
 
