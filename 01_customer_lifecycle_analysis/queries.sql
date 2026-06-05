@@ -77,5 +77,32 @@ from final
 group by segment;
 
 -- METRIC 4: COHORT RETENTION - MONTH 0 TO MONTH 6
+with base as 
+(
+select distinct
+    o.customer_id,
+    min(date_trunc('month', o.order_date)) over (partition by o.customer_id) as cohort_month,
+    date_trunc('month', o.order_date) as activity_month
+from orders o
+where o.order_status = 'delivered'
+)
+, monthly_counts as 
+(
+select 
+    cohort_month,
+    ((extract(year from age(activity_month, cohort_month)) * 12) + extract(month from age(activity_month, cohort_month)))::int as months_since_first,
+    count(distinct customer_id) as active_customers
+from base
+group by cohort_month, months_since_first
+)
+select 
+    cohort_month,
+    max(case when months_since_first = 0 then active_customers end) over (partition by cohort_month) as total_customers_in_cohort,
+    months_since_first,
+    active_customers,
+    round(100.0 * active_customers / max(case when months_since_first = 0 then active_customers end) over (partition by cohort_month), 2) as retention_pct
+from monthly_counts
+where months_since_first between 0 and 6
+order by cohort_month, months_since_first;
 
 -- METRIC 5: CHURN RISK FLAGGING
