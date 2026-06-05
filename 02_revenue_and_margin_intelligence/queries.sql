@@ -88,3 +88,17 @@ select
 from cte;
 
 --METRIC 5: Revenue Concentration — Top 20% Customers
+with customer_wise_revenue as
+(
+select
+	customer_id,
+    sum(net_amount) revenue
+from orders
+group by customer_id
+)
+select
+	customer_id,
+    round(100.0*sum(revenue) over (order by revenue desc, customer_id asc)/sum(revenue) over (), 2) cumulative_revenue_pct,
+    round(100.0*row_number() over (order by revenue desc)/nullif(count(*) over (),0), 2) customer_pct
+    --row_number instead of rank or dense rank ensures increaseing percentage with each customer even if their spend is the same
+from customer_wise_revenue;
