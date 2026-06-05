@@ -38,6 +38,37 @@ group by ca.parent_category, ca.category_name
 order by gross_profit desc;
 
 --METRIC 3: Discount Depth Analysis
+with bucketing as
+(
+select
+	oi.item_id,
+    oi.quantity*p.cost_price cogs,
+    oi.line_total - oi.quantity*p.cost_price gross_profit,
+    case 
+        when oi.discount_pct = 0 then 'No Discount'
+        when oi.discount_pct <= 0.10 then '1-10%'
+        when oi.discount_pct <= 0.20 then '11-20%'
+        when oi.discount_pct <= 0.30 then '21-30%'
+        when oi.discount_pct <= 0.50 then '31-50%'
+        else '50%+ Deep Discount'
+    end bucket,
+  	oi.line_total revenue
+from order_items oi
+join products p on oi.product_id = p.product_id
+join orders o on oi.order_id = o.order_id
+where o.order_status = 'delivered'
+)
+select
+	b.bucket,
+    count(b.item_id),
+    sum(b.revenue) total_revenue,
+    sum(b.cogs) total_cogs,
+    sum(b.gross_profit) total_gross_profit,
+    round(avg(b.gross_profit/nullif(b.revenue,0)),2) avg_margin_pct,
+    round(sum(b.revenue)/count(b.item_id),2) avg_unit_price
+from bucketing b
+group by b.bucket
+order by b.bucket;
 
 --METRIC 4: Month-over-Month Growth with Year-over-Year Comparison
 
