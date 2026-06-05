@@ -27,3 +27,55 @@ join orders o on c.customer_id = o.customer_id
 where o.order_status = 'delivered'
 group by c.tier
 order by aov desc;
+
+-- METRIC 3: RECENCY FREQUENCY MONETARY (RFM) SEGMENTATION
+with RFM as
+(
+select
+	o.customer_id,
+    current_date - max(o.order_date)::date recency,
+    count(distinct o.order_id) frequency,
+    sum(o.net_amount) monetary
+from orders o
+where o.order_status = 'delivered'
+group by o.customer_id
+)
+, RFM2 as
+(
+select
+  	customer_id,
+	ntile(5) over (order by recency desc) r,
+    ntile(5) over (order by frequency asc) f,
+    ntile(5) over (order by monetary asc) m
+from RFM
+)
+, final as
+(
+select
+	t1.customer_id,
+	case
+    	when t2.r>=4 and t2.f>=4 then'Champion'
+        when t2.r>=3 and t2.f>=3 then 'Loyal'
+        when t2.r>=4 and t2.f<=2 then 'New Customer'
+        when t2.r<=2 and t2.f>=3 then 'At Risk'
+        when t2.r=1 and t2.f=1 then 'Lost'
+        else 'Needs Attention'
+    end segment,
+    t1.recency,
+    t1.frequency,
+    t1.monetary
+from RFM t1
+join RFM2 t2 on t1.customer_id = t2.customer_id
+)
+select
+	segment,
+    count(customer_id),
+    round(avg(recency),2),
+    round(avg(frequency),2),
+    round(avg(monetary),2)
+from final
+group by segment;
+
+-- METRIC 4: COHORT RETENTION - MONTH 0 TO MONTH 6
+
+-- METRIC 5: CHURN RISK FLAGGING
