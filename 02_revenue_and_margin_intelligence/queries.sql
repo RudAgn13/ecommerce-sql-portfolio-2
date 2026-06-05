@@ -71,5 +71,20 @@ group by b.bucket
 order by b.bucket;
 
 --METRIC 4: Month-over-Month Growth with Year-over-Year Comparison
+with cte as
+(
+select
+	date_trunc('month', order_date) order_month,
+    sum(net_amount) revenue
+from orders
+where order_status = 'delivered'
+group by date_trunc('month', order_date)
+)
+select
+	order_month,
+    revenue,
+    round(100.0*(revenue-lag(revenue,1) over (order by order_month))/nullif(lag(revenue,1) over (order by order_month),0),2) MoM_growth,
+    round(100.0*(revenue-lag(revenue,12) over (order by order_month))/nullif(lag(revenue,12) over (order by order_month),0),2) YoY_growth
+from cte;
 
 --METRIC 5: Revenue Concentration — Top 20% Customers
