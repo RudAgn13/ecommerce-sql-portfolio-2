@@ -126,3 +126,29 @@ where o.order_status = 'delivered'
 group by o.customer_id, c.tier, c.acquisition_channel
 having (select max(order_date)::date from orders) - max(o.order_date)::date >= 60
 order by total_spend desc;
+
+-- METRIC 6: LTV BY ACQUISITION CHANNEL
+with customer_summary as
+(
+select
+	c.customer_id,
+    c.acquisition_channel,
+    sum(o.net_amount) customer_revenue,
+    count(distinct o.order_id) customer_order_volume,
+    round(1.0*(max(o.order_date)::date - min(o.order_date)::date)/365,2) customer_lifespan
+from customers c
+join orders o on c.customer_id = o.customer_id
+where o.order_status = 'delivered'
+group by c.customer_id, c.acquisition_channel
+)
+select
+  	acquisition_channel,
+  	count(distinct customer_id) cohort_size,
+  	round(1.0*sum(customer_revenue)/sum(customer_order_volume),2) average_order_value,
+  	round(avg(customer_order_volume),2) average_purchase_frequency,
+  	round(avg(customer_lifespan),2) average_customer_lifespan,
+    round(avg(customer_revenue),2) average_spend_per_customer,
+  	round((1.0*sum(customer_revenue)/sum(customer_order_volume))*(avg(customer_order_volume))*(avg(customer_lifespan)),2) computed_ltv
+from customer_summary
+group by acquisition_channel
+order by computed_ltv desc;
