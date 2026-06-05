@@ -2,7 +2,6 @@
 -- Project 1: Customer Lifecycle Analysis
 
 -- METRIC 1: CUSTOMER ORDER SUMMARY
-
 select
 	c.customer_id,
     count(distinct o.order_id) delivered_orders,
