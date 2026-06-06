@@ -63,5 +63,20 @@ group by p.payment_method, p.payment_gateway
 order by failure_rate_pct desc;
 
 -- METRIC 5: FULFILLMENT FUNNEL BY MONTH
+select
+	date_trunc('month', o.order_date)::date order_month,
+    count(o.order_id) placed_orders,
+    count(case when o.order_status<>'cancelled' then o.order_id else null end) confirmed_orders,
+    count(case when o.order_status in ('shipped','delivered', 'returned') then o.order_id else null end) shipped_orders,
+    count(case when o.order_status in ('delivered', 'returned') then o.order_id else null end) delivered_orders,
+    count(case when o.order_status in ('returned') then o.order_id else null end) returned_orders,
+    count(case when o.order_status in ('cancelled') then o.order_id else null end) cancelled_orders,
+    round(100.0*count(case when o.order_status<>'cancelled' then o.order_id else null end)/nullif(count(o.order_id),0),2) confirmation_rate_pct,
+    round(100.0*count(case when o.order_status in ('delivered', 'returned') then o.order_id else null end)/nullif(count(o.order_id),0),2) delivered_rate_pct,
+    round(100.0*count(case when o.order_status in ('returned') then o.order_id else null end)/nullif(count(case when o.order_status in ('delivered', 'returned') then o.order_id else null end),0),2) returned_rate_pct,
+    round(100.0*count(case when o.order_status in ('cancelled') then o.order_id else null end)/nullif(count(o.order_id),0),2) cancellation_rate_pct
+from orders o
+group by date_trunc('month', o.order_date)
+order by order_month;
 
 -- METRIC 6: COD VS. PREPAID ORDER ANALYSIS
