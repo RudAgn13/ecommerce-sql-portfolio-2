@@ -28,6 +28,24 @@ where o.order_status = 'delivered'
 group by s.seller_tier;
 
 -- METRIC 3: RETURN RATE & ROOT CAUSE ANALYSIS
+select
+	r.return_reason,
+  	c.parent_category,
+    count(c.parent_category) over (partition by c.parent_category) number_of_return_in_category,
+    -- or sum(count(r.return_id)) over (partition by c.parent_category) as number_of_return_in_category, claude tell me if this is better
+    count(r.return_id) total_returns,
+    sum(r.refund_amount) total_refund_value,
+    round(avg(r.return_resolved_at::date-r.return_requested_at::date),2) avg_days_to_resolve,
+    count(case when r.seller_fault=true then r.return_id else null end) seller_fault_returns,
+    count(case when r.refund_status='rejected' then r.return_id else null end) rejected_refunds,
+    round(sum(r.refund_amount)/nullif(count(r.return_id),0),2) avg_refund_amount_per_return,
+    round(100.0*count(case when r.seller_fault=true then r.return_id else null end)/count(r.return_id),2) sellers_fault_return_pct
+from returns r
+join orders o on r.order_id = o.order_id
+join order_items oi on o.order_id = oi.order_id
+join products p on oi.product_id = p.product_id
+join categories c on p.category_id = c.category_id
+group by r.return_reason, c.parent_category;
 
 -- METRIC 4: PAYMENT FAILURE RATE BY METHOD & GATEWAY
 
