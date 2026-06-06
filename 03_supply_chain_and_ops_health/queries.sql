@@ -48,6 +48,19 @@ join categories c on p.category_id = c.category_id
 group by r.return_reason, c.parent_category;
 
 -- METRIC 4: PAYMENT FAILURE RATE BY METHOD & GATEWAY
+select
+	p.payment_gateway,
+	p.payment_method,
+    count(p.payment_id) total_payment_attempts,
+    count(case when p.payment_status='success' then p.payment_id else null end) successful_payments,
+    count(case when p.payment_status='failed' then p.payment_id else null end) failed_payments,
+    count(case when p.payment_status='refunded' then p.payment_id else null end) refunded_payments,
+    sum(case when p.payment_status='failed' then p.amount else 0 end) failed_gmv,
+    round(100.0*count(case when p.payment_status='failed' then p.payment_id else null end)/count(p.payment_id),2) failure_rate_pct,
+    mode() within group (order by p.failure_reason) most_common_failure_reason
+from payments p
+group by p.payment_method, p.payment_gateway
+order by failure_rate_pct desc;
 
 -- METRIC 5: FULFILLMENT FUNNEL BY MONTH
 
