@@ -124,3 +124,34 @@ from by_customer
 group by parent_category;
 
 --METRIC 5: NEW VS. RETURNING SELLER GMV CONTRIBUTION OVER TIME
+with seller_onboarding as (
+select
+	s.seller_id,
+    date_trunc('month', s.onboarded_at)::date onboarding_date,
+  	
+    extract(year from (select max(o.order_date) from orders o)) * 12 - extract(year from s.onboarded_at) * 12 + extract(month from (select max(o.order_date) from orders o)) - extract(month from s.onboarded_at) gap
+from sellers s
+), seller_buckets as (
+select
+	seller_id,
+  	
+    case
+    	when gap<18 then 'new'
+        else 'established'
+    end buckets
+from seller_onboarding
+)
+select
+	sb.buckets,
+    date_trunc('month', o.order_date)::date order_month,
+	sum(oi.line_total) gmv_by_bucket,
+    round(100.0*sum(oi.line_total)/nullif(sum(sum(oi.line_total)) over (partition by date_trunc('month', o.order_date)), 0), 2) gmv_pct,
+    --inner sum(oi.line_total) uses group by bucket and order_month to find the gmv for said month and bucket of seller. further, the window function adds these and totals the same for each order_month as mentioned in partition by.
+    count(distinct sb.seller_id) sellers_by_bucket
+from seller_buckets sb
+join products p on sb.seller_id = p.seller_id
+join order_items oi on p.product_id = oi.product_id
+join orders o on oi.order_id = o.order_id
+where o.order_status = 'delivered'
+group by sb.buckets, date_trunc('month', o.order_date)
+order by order_month;
