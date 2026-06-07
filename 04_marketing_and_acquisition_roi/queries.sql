@@ -71,3 +71,31 @@ left join orders o on cs.session_id = o.session_id
 group by cs.utm_source, cs.utm_medium;
 
 -- METRIC 4: CAMPAIGN ROI
+with c1 as (
+select
+	me.campaign_name,
+    sum(me.cost_per_event) total_campaign_spend,
+    count(distinct me.customer_id) customers_touched
+from marketing_events me
+group by me.campaign_name
+)
+, c2 as (
+select
+	me.campaign_name,
+	sum(o.net_amount) revenue_attributed,
+    count(distinct o.customer_id) number_of_conversions
+from orders o
+right join marketing_events me on
+	o.customer_id = me.customer_id
+    and o.order_date::date-me.event_timestamp::date between 0 and 7
+  	and me.event_type in ('email_clicked', 'push_clicked', 'sms_clicked', 'ad_clicked')
+group by me.campaign_name
+)
+select
+	c1.campaign_name,
+    coalesce(c2.revenue_attributed, 0) revenue_attributed,
+    round(100.0*(coalesce(c2.revenue_attributed, 0) - c1.total_campaign_spend)/nullif(c1.total_campaign_spend,0),2) roi,
+    c1.customers_touched,
+    coalesce(c2.number_of_conversions, 0) number_of_conversions
+from c1
+left join c2 on c1.campaign_name = c2.campaign_name;
