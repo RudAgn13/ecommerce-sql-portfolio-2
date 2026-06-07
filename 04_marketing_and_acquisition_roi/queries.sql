@@ -55,5 +55,19 @@ where me.channel = 'email'
 group by me.campaign_name;
 
 -- METRIC 3: CHANNEL PERFORMANCE - SESSIONS TO ORDERS
+select
+	cs.utm_source,
+    cs.utm_medium,
+    count(cs.session_id) total_sessions,
+    count(distinct case when cs.bounce=true then cs.session_id end) bounced_sessions,
+    count(distinct case when cs.converted=true then cs.session_id end) converted_sessions,
+    count(case when cs.converted=true then o.order_id end) orders_from_converted_sessions,
+    sum(case when cs.converted=true then o.net_amount end) revenue_from_orders_from_converted_sessions,
+    round(100.0*count(distinct case when cs.bounce=true then cs.session_id end)/nullif(count(cs.session_id),0),2) bounce_rate_pct,
+    round(100.0*count(distinct case when cs.converted=true then cs.session_id end)/nullif(count(cs.session_id),0),2) conversion_rate_pct,
+    round(coalesce(sum(case when cs.converted=true then o.net_amount end),0)/nullif(count(cs.session_id),0),2) revenue_per_session
+from customer_sessions cs
+left join orders o on cs.session_id = o.session_id
+group by cs.utm_source, cs.utm_medium;
 
 -- METRIC 4: CAMPAIGN ROI
