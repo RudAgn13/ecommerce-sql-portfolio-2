@@ -77,6 +77,29 @@ where top_ranks <= 3 or bottom_ranks <= 3
 order by seller_tier, gmv desc;
 
 -- METRIC 3: CATEGORY VELOCITY - FAST/SLOW MOVING
+with product_analytics as (
+select
+	p.product_id,
+    p.category_id,
+    coalesce(sum(oi.quantity),0) units_sold,
+  	sum(oi.line_total) total_revenue,
+    current_date - max(order_date)::date days_since_last_sale,
+    ntile(4) over (partition by p.category_id order by coalesce(sum(oi.quantity),0) desc) quartile
+from products p
+left join order_items oi on p.product_id = oi.product_id
+left join orders o on oi.order_id = o.order_id and o.order_status = 'delivered'
+group by p.product_id, p.category_id
+)
+select
+	category_id,
+    count(product_id) total_products,
+    count(case when quartile=1 then quartile end) top_movers,
+    count(case when quartile=4 then quartile end) slow_movers,
+    sum(case when quartile=4 then total_revenue else 0 end) gmv_tied_up_in_slow_movers,
+    round(avg(days_since_last_sale),2) avg_days_since_last_sale
+from product_analytics
+group by category_id
+order by gmv_tied_up_in_slow_movers desc;
 
 -- METRIC 4: REPEAT PURCHASE RATE BY CATEGORY
 
