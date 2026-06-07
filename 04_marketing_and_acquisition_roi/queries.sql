@@ -35,6 +35,24 @@ left join acquired a on ce.channel_bucket = a.channel_bucket
 order by cac asc;
 
 -- METRIC 2: EMAIL CAMPAIGN FUNNEL
+select
+    me.campaign_name,
+    count(case when me.event_type = 'email_sent' then 1 end) emails_sent,
+    count(case when me.event_type = 'email_opened' then 1 end) emails_opened,
+    count(case when me.event_type = 'email_clicked' then 1 end) emails_clicked,
+    count(distinct case when me.event_type = 'email_clicked' then me.customer_id end) unique_clickers,
+    count(o.order_id) as order_within_3_days, --handled in join
+    coalesce(sum(o.net_amount), 0) as revenue_from_order_within_3_days,
+    round(100.0 * count(case when me.event_type = 'email_opened' then 1 end) / nullif(count(case when me.event_type = 'email_sent' then 1 end), 0), 2) as open_rate_pct,
+    round(100.0 * count(distinct case when me.event_type = 'email_clicked' then me.customer_id end) / nullif(count(case when me.event_type = 'email_opened' then 1 end), 0), 2) as click_through_rate_pct,
+    round(100.0 * count(o.order_id) / nullif(count(case when me.event_type = 'email_clicked' then 1 end), 0), 2) as purchase_conversion_pct
+from marketing_events me
+left join orders o 
+    on me.customer_id = o.customer_id
+    and me.event_type = 'email_clicked'
+    and o.order_date::date - me.event_timestamp::date between 0 and 3
+where me.channel = 'email'
+group by me.campaign_name;
 
 -- METRIC 3: CHANNEL PERFORMANCE - SESSIONS TO ORDERS
 
