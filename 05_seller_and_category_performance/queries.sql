@@ -7,6 +7,7 @@ select
     round(100.0*count(distinct case when o.actual_delivery<=o.expected_delivery then o.order_id end)/count(distinct o.order_id),2) otdr_pct,
     round(100.0*count(r.return_id)/count(oi.item_id),2) return_rate_pct,
     round(avg(o.actual_delivery::date - o.order_date::date - s.avg_dispatch_days)::decimal,2) dispatch_to_delivery_days
+	--doing this because we do not have a specific column for shipping date. this is the closest we can get to it as per data.
 from sellers s
 left join order_items oi on s.seller_id = oi.seller_id
 left join orders o on oi.order_id = o.order_id
@@ -41,10 +42,10 @@ from attrib
 )
 select
 	*,
-    ntile(4) over (order by composite_score desc)
+    ntile(4) over (order by composite_score desc) performance_quartile
 from comp;
 
--- METRIC 2: TOP AND BOTTOM 5 SELLERS BY GMV
+-- METRIC 2: TOP AND BOTTOM 3 SELLERS BY GMV
 with seller_gmv as (
 select
 	s.seller_tier,
@@ -83,8 +84,9 @@ select
     p.category_id,
     coalesce(sum(oi.quantity),0) units_sold,
   	sum(oi.line_total) total_revenue,
-    current_date - max(order_date)::date days_since_last_sale,
-    ntile(4) over (partition by p.category_id order by coalesce(sum(oi.quantity),0) desc) quartile
+    (select max(order_date)::date from orders) - coalesce(max(order_date),(select max(order_date)::date from orders))::date days_since_last_sale,
+    --coalesce here ensures that people who have NOT sold anything say days_since_last_sale = 0, which helps to not pollute the velocity analysis
+	ntile(4) over (partition by p.category_id order by coalesce(sum(oi.quantity),0) desc) quartile
 from products p
 left join order_items oi on p.product_id = oi.product_id
 left join orders o on oi.order_id = o.order_id and o.order_status = 'delivered'
@@ -137,6 +139,7 @@ select
   	
     case
     	when gap<18 then 'new'
+		--18 months to see different things in data.
         else 'established'
     end buckets
 from seller_onboarding
