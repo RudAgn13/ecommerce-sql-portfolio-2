@@ -45,6 +45,36 @@ select
 from comp;
 
 -- METRIC 2: TOP AND BOTTOM 5 SELLERS BY GMV
+with seller_gmv as (
+select
+	s.seller_tier,
+    s.seller_id,
+    sum(oi.line_total) gmv
+from sellers s
+join order_items oi on s.seller_id = oi.seller_id 
+--inner join intentional, to drop sellers with 0 delivered items/orders
+join orders o on oi.order_id = o.order_id
+where o.order_status = 'delivered'
+group by s.seller_tier, s.seller_id
+)
+, ranked_sellers as (
+select
+	seller_tier,
+    seller_id,
+    gmv,
+    rank() over (partition by seller_tier order by gmv desc) top_ranks,
+    rank() over (partition by seller_tier order by gmv asc) bottom_ranks
+from seller_gmv
+)
+select
+    seller_tier,
+    seller_id,
+    gmv,
+    top_ranks,
+    bottom_ranks
+from ranked_sellers
+where top_ranks <= 3 or bottom_ranks <= 3
+order by seller_tier, gmv desc;
 
 -- METRIC 3: CATEGORY VELOCITY - FAST/SLOW MOVING
 
