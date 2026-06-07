@@ -102,5 +102,25 @@ group by category_id
 order by gmv_tied_up_in_slow_movers desc;
 
 -- METRIC 4: REPEAT PURCHASE RATE BY CATEGORY
+with by_customer as (
+select
+	c.parent_category,
+    o.customer_id,
+    count(distinct o.order_id) orders_placed
+from categories c
+join products p on c.category_id = p.category_id
+join order_items oi on p.product_id = oi.product_id
+join orders o on oi.order_id = o.order_id
+where o.order_status = 'delivered'
+group by c.parent_category, o.customer_id
+)
+select
+	parent_category,
+    count(customer_id) total_unique_buyers,
+    count(case when orders_placed>=2 then 1 end) repeat_buyers,
+	round(100.0*count(case when orders_placed>=2 then 1 end)/nullif(count(customer_id),0),2) repeat_purchase_rate_pct,
+    round(avg(orders_placed),2) avg_orders_per_buyer
+from by_customer
+group by parent_category;
 
 --METRIC 5: NEW VS. RETURNING SELLER GMV CONTRIBUTION OVER TIME
