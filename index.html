@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CartIQ · E-Commerce SQL Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+/* ── TOKENS ─────────────────────────────────────────────────────────── */
+:root{
+  --bg:#0d0d0d;
+  --surface:#161616;
+  --surface2:#1e1e1e;
+  --border:#2a2a2a;
+  --border2:#333;
+  --accent:#FF9900;
+  --accent2:#e68a00;
+  --accent-dim:rgba(255,153,0,.12);
+  --accent-dim2:rgba(255,153,0,.06);
+  --text:#f0f0f0;
+  --text2:#a0a0a0;
+  --text3:#666;
+  --blue:#60a5fa;
+  --green:#34d399;
+  --red:#f87171;
+  --purple:#a78bfa;
+  --radius:10px;
+  --font-head:'Syne',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --font-body:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.6;overflow-x:hidden}
+
+/* ── SCROLLBAR ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── NAV ─────────────────────────────────────────────────────────────── */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(13,13,13,.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+  display:flex;align-items:center;gap:2rem;
+  height:52px;
+  overflow-x:auto;
+}
+nav::-webkit-scrollbar{height:0}
+.nav-brand{
+  font-family:var(--font-head);font-weight:800;font-size:1.1rem;
+  color:var(--accent);white-space:nowrap;flex-shrink:0;
+  letter-spacing:-.02em;
+}
+.nav-links{display:flex;gap:.25rem;flex-shrink:0}
+.nav-links a{
+  font-size:.72rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--text2);text-decoration:none;padding:.3rem .7rem;border-radius:6px;
+  white-space:nowrap;transition:color .2s,background .2s;
+}
+.nav-links a:hover{color:var(--accent);background:var(--accent-dim)}
+.nav-links a.active{color:var(--accent);background:var(--accent-dim)}
+
+/* ── HERO ────────────────────────────────────────────────────────────── */
+.hero{
+  padding:4rem 2rem 3rem;
+  max-width:1200px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 380px;gap:3rem;align-items:start;
+}
+.hero-left h1{
+  font-family:var(--font-head);font-weight:800;font-size:clamp(2rem,4vw,3.2rem);
+  line-height:1.1;letter-spacing:-.03em;color:var(--text);
+  margin-bottom:1rem;
+}
+.hero-left h1 span{color:var(--accent)}
+.hero-meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.2rem}
+.tag{
+  font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:.25rem .65rem;border-radius:20px;border:1px solid var(--border2);
+  color:var(--text2);background:var(--surface);
+}
+.tag.accent{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+.hero-desc{font-size:.95rem;color:var(--text2);line-height:1.7;max-width:560px}
+
+/* stat grid */
+.stat-grid{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  background:linear-gradient(var(--surface),var(--surface)) padding-box,
+             linear-gradient(135deg,var(--accent),transparent) border-box;
+  border:1px solid transparent;
+}
+.stat-cell{
+  background:var(--surface);padding:1rem 1.2rem;
+  border-right:1px solid var(--border);border-bottom:1px solid var(--border);
+}
+.stat-cell:nth-child(2n){border-right:none}
+.stat-cell:nth-last-child(-n+2){border-bottom:none}
+.stat-val{
+  font-family:var(--font-head);font-weight:800;font-size:1.45rem;
+  color:var(--accent);letter-spacing:-.02em;line-height:1;margin-bottom:.25rem;
+}
+.stat-lbl{font-size:.7rem;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+
+/* ── SECTION HEADERS ─────────────────────────────────────────────────── */
+.proj-section{max-width:1200px;margin:0 auto;padding:0 2rem 4rem}
+.proj-header{
+  display:flex;align-items:baseline;gap:1rem;
+  padding:2rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem;
+}
+.proj-num{
+  font-family:var(--font-mono);font-size:.75rem;color:var(--accent);
+  background:var(--accent-dim);border:1px solid var(--accent);
+  padding:.2rem .5rem;border-radius:4px;flex-shrink:0;
+}
+.proj-title{font-family:var(--font-head);font-weight:700;font-size:1.5rem;letter-spacing:-.02em}
+.proj-sub{font-size:.85rem;color:var(--text2);margin-top:.15rem}
+
+/* ── METRIC BLOCK ────────────────────────────────────────────────────── */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:1.25rem}
+.metric{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:border-color .25s;
+}
+.metric:hover{border-color:var(--border2)}
+.metric-head{padding:1.1rem 1.25rem .8rem;border-bottom:1px solid var(--border)}
+.metric-num{font-family:var(--font-mono);font-size:.65rem;color:var(--accent);margin-bottom:.3rem}
+.metric-title{font-family:var(--font-head);font-weight:700;font-size:1rem;letter-spacing:-.015em;margin-bottom:.3rem}
+.metric-desc{font-size:.78rem;color:var(--text2);line-height:1.55}
+.chart-type-badge{
+  display:inline-block;margin-top:.4rem;
+  font-size:.65rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--blue);background:rgba(96,165,250,.1);
+  border:1px solid rgba(96,165,250,.2);padding:.15rem .5rem;border-radius:4px;
+}
+.tabular-badge{
+  color:var(--purple);background:rgba(167,139,250,.1);
+  border-color:rgba(167,139,250,.2);
+}
+
+/* chart area */
+.chart-area{flex:1;padding:1.25rem;min-height:0}
+.chart-area canvas{height:280px!important}
+.tbl-wrap{padding:1rem 1.25rem;overflow-x:auto}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:.76rem}
+.tbl-wrap th{
+  font-family:var(--font-mono);font-size:.64rem;font-weight:500;
+  letter-spacing:.04em;text-transform:uppercase;
+  color:var(--text3);border-bottom:1px solid var(--border2);
+  padding:.5rem .6rem;text-align:left;white-space:nowrap;
+}
+.tbl-wrap td{
+  padding:.45rem .6rem;border-bottom:1px solid var(--border);
+  color:var(--text2);font-size:.76rem;white-space:nowrap;
+}
+.tbl-wrap tr:last-child td{border-bottom:none}
+.tbl-wrap tr:hover td{background:var(--surface2)}
+td.num{text-align:right;font-family:var(--font-mono);color:var(--text)}
+td.accent{color:var(--accent);font-weight:600}
+td.green{color:var(--green)}
+td.red{color:var(--red)}
+
+/* sql toggle */
+.sql-toggle{
+  padding:.65rem 1.25rem;border-top:1px solid var(--border);
+  background:var(--surface2);cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;
+  user-select:none;transition:background .2s;
+}
+.sql-toggle:hover{background:var(--accent-dim2)}
+.sql-toggle-label{font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3)}
+.sql-toggle-icon{font-size:.7rem;color:var(--text3);transition:transform .25s}
+.sql-toggle.open .sql-toggle-icon{transform:rotate(180deg)}
+.sql-block{
+  max-height:0;overflow:hidden;transition:max-height .35s ease;
+  background:var(--bg);border-top:1px solid var(--border);
+}
+.sql-block.open{max-height:800px}
+.sql-block pre{
+  padding:1rem 1.25rem;overflow-x:auto;
+  font-family:var(--font-mono);font-size:.72rem;line-height:1.65;color:#ccc;
+}
+/* syntax highlight */
+.kw{color:var(--accent);font-weight:500}
+.fn{color:var(--blue)}
+.str{color:#fbbf24}
+.cmt{color:#555;font-style:italic}
+.num-lit{color:var(--green)}
+
+/* ── SANDBOX ─────────────────────────────────────────────────────────── */
+#sandbox{max-width:1200px;margin:0 auto;padding:0 2rem 5rem}
+.sandbox-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.5rem;
+}
+.sandbox-box h2{font-family:var(--font-head);font-weight:700;font-size:1.3rem;margin-bottom:.5rem}
+.sandbox-box p{font-size:.85rem;color:var(--text2);margin-bottom:1rem}
+textarea{
+  width:100%;height:90px;background:var(--bg);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--font-mono);font-size:.78rem;
+  border-radius:6px;padding:.75rem;resize:vertical;outline:none;
+  transition:border-color .2s;
+}
+textarea:focus{border-color:var(--accent)}
+.sandbox-controls{display:flex;gap:.75rem;margin-top:.75rem;flex-wrap:wrap}
+button{
+  font-family:var(--font-body);font-size:.8rem;font-weight:600;
+  padding:.5rem 1.2rem;border-radius:6px;border:none;cursor:pointer;
+  transition:all .2s;
+}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+.btn-secondary:hover{background:var(--border);color:var(--text)}
+#sandbox-output{margin-top:1rem;overflow-x:auto}
+#sandbox-output table{width:100%;border-collapse:collapse;font-size:.76rem}
+#sandbox-output th{font-family:var(--font-mono);font-size:.65rem;color:var(--text3);border-bottom:1px solid var(--border2);padding:.45rem .6rem;text-align:left}
+#sandbox-output td{padding:.4rem .6rem;border-bottom:1px solid var(--border);color:var(--text2)}
+#sandbox-output tr:last-child td{border-bottom:none}
+#sandbox-msg{font-size:.8rem;color:var(--text3);margin-top:.5rem}
+
+/* ── SANDBOX EXTRAS ──────────────────────────────────────────────────── */
+.sandbox-header{margin-bottom:1rem}
+.sb-chart-row{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem}
+.sb-label{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);white-space:nowrap}
+.sb-chart-types{display:flex;gap:.4rem;flex-wrap:wrap}
+.sb-type{
+  font-family:var(--font-mono);font-size:.72rem;font-weight:500;
+  padding:.3rem .75rem;border-radius:6px;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--text3);cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;gap:.35rem;
+}
+.sb-type:hover{border-color:var(--accent);color:var(--accent)}
+.sb-type.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.sb-icon{font-size:.8rem}
+.sb-select{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  font-family:var(--font-mono);font-size:.72rem;padding:.25rem .5rem;
+  border-radius:5px;outline:none;cursor:pointer;
+}
+.sb-select:focus{border-color:var(--accent)}
+.sb-val-check{display:flex;align-items:center;gap:.3rem;font-size:.72rem;color:var(--text2);font-family:var(--font-mono);cursor:pointer}
+.sb-val-check input[type=checkbox]{accent-color:var(--accent);cursor:pointer}
+
+/* ── FOOTER ──────────────────────────────────────────────────────────── */
+footer{
+  border-top:1px solid var(--border);padding:1.5rem 2rem;
+  text-align:center;font-size:.75rem;color:var(--text3);
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────── */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:2rem}
+  .metrics-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  nav{padding:0 1rem}
+  .hero{padding:2.5rem 1rem 2rem}
+  .proj-section{padding:0 1rem 3rem}
+  #sandbox{padding:0 1rem 3rem}
+  .stat-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-brand">CartIQ</span>
+  <div class="nav-links">
+    <a href="#home" class="active">Home</a>
+    <a href="#p1">Customer Lifecycle</a>
+    <a href="#p2">Revenue & Margin</a>
+    <a href="#p3">Supply Chain & Ops</a>
+    <a href="#p4">Marketing & Acquisition ROI</a>
+    <a href="#p5">Seller & Category Performance</a>
+    <a href="#sandbox">Sandbox</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="home" class="hero">
+  <div class="hero-left">
+    <h1>CartIQ<br><span>E-Commerce</span><br>SQL Portfolio</h1>
+    <div class="hero-meta">
+      <span class="tag accent">PostgreSQL 15</span>
+      <span class="tag">5 Projects</span>
+      <span class="tag">25 Metrics</span>
+      <span class="tag">Marketplace Analytics</span>
+    </div>
+    <p class="hero-desc">
+      End-to-end analytics across customer lifecycle, revenue intelligence,
+      supply chain health, marketing ROI, and seller performance — modelled
+      on a real Indian marketplace with seller tiers, COD dynamics, UPI payment
+      rails, and India-specific acquisition channels. The analytical framework
+      mirrors what teams at large-scale Indian marketplaces use daily.
+    </p>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-cell"><div class="stat-val">₹2.28M</div><div class="stat-lbl">Total GMV</div></div>
+    <div class="stat-cell"><div class="stat-val">89</div><div class="stat-lbl">Orders Analysed</div></div>
+    <div class="stat-cell"><div class="stat-val">66</div><div class="stat-lbl">Active Customers</div></div>
+    <div class="stat-cell"><div class="stat-val">17</div><div class="stat-lbl">Champion Customers</div></div>
+    <div class="stat-cell"><div class="stat-val">86.8%</div><div class="stat-lbl">Elite Seller OTDR</div></div>
+    <div class="stat-cell"><div class="stat-val">₹39,974</div><div class="stat-lbl">Bronze Tier AOV</div></div>
+    <div class="stat-cell"><div class="stat-val">−8.3%</div><div class="stat-lbl">Laptops Gross Margin</div></div>
+    <div class="stat-cell"><div class="stat-val">33.3%</div><div class="stat-lbl">HDFC Failure Rate</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PROJECT 1 — CUSTOMER LIFECYCLE
+═══════════════════════════════════════════════════════ -->
+<section id="p1" class="proj-section">
+  <div class="proj-header">
+    <span class="proj-num">01</span>
+    <div>
+      <div class="proj-title">Customer Lifecycle Analysis</div>
+      <div class="proj-sub">Order summary · AOV by tier · RFM segmentation · Cohort retention · Churn risk · LTV by channel</div>
+    </div>
+  </div>
+  <div class="metrics-grid">
+
+    <!-- 1.1 AOV BY TIER -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">1.1 · AOV BY CUSTOMER TIER</div>
+        <div class="metric-title">Average Order Value & Purchase Frequency by Tier</div>
+        <div class="metric-desc">
+          Bronze tier posts the highest AOV (₹39,974) — counterintuitively higher than Platinum (₹29,585).
+          This is a sample-size effect: Bronze has only 10 customers, several of whom bought high-value electronics.
+          In a larger dataset, Platinum should lead. Platinum does lead on avg orders per customer (1.67×),
+          confirming the loyalty programme drives repeat purchases even if AOV is compressed by category mix.
+          <span class="chart-type-badge">Grouped Bar · comparing two independent metrics across 4 tiers</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c1-aov"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="cmt">-- AOV by customer tier</span>
+<span class="kw">SELECT</span>
+  c.tier,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> c.customer_id)        customers_in_tier,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id)          total_delivered_orders,
+  <span class="fn">SUM</span>(o.net_amount)                   total_revenue,
+  <span class="fn">ROUND</span>(<span class="fn">SUM</span>(o.net_amount)/<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id),<span class="num-lit">0</span>),<span class="num-lit">2</span>) AOV,
+  <span class="fn">ROUND</span>(<span class="num-lit">1.0</span>*<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id)/<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> c.customer_id),<span class="num-lit">0</span>),<span class="num-lit">2</span>) avg_orders_per_customer
+<span class="kw">FROM</span> customers c
+<span class="kw">JOIN</span> orders o <span class="kw">ON</span> c.customer_id = o.customer_id
+<span class="kw">WHERE</span> o.order_status = <span class="str">'delivered'</span>
+<span class="kw">GROUP BY</span> c.tier
+<span class="kw">ORDER BY</span> aov <span class="kw">DESC</span>;</pre>
+      </div>
+    </div>
+
+    <!-- 1.2 RFM -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">1.2 · RFM SEGMENTATION</div>
+        <div class="metric-title">Customer Count by RFM Segment</div>
+        <div class="metric-desc">
+          Champions (17) are the largest single segment and carry the highest avg monetary value (₹80,146) —
+          5× the Needs Attention group. Note: avg_frequency = 1.00 for all non-Champion segments
+          because most customers have exactly one order in the seed dataset — this is a data density
+          artefact, not a query issue. In production with richer data, frequency scores would spread further.
+          <span class="chart-type-badge">Horizontal Bar · ranking segments by size makes relative scale immediately visible</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c1-rfm"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="cmt">-- RFM segmentation using NTILE(5) scoring</span>
+<span class="kw">WITH</span> RFM <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> o.customer_id,
+    (<span class="kw">SELECT</span> <span class="fn">MAX</span>(order_date)<span class="kw">::</span><span class="fn">date</span> <span class="kw">FROM</span> orders) - <span class="fn">MAX</span>(o.order_date)<span class="kw">::</span><span class="fn">date</span> recency,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id) frequency,
+    <span class="fn">SUM</span>(o.net_amount) monetary
+  <span class="kw">FROM</span> orders o <span class="kw">WHERE</span> o.order_status = <span class="str">'delivered'</span>
+  <span class="kw">GROUP BY</span> o.customer_id
+), RFM2 <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> customer_id,
+    <span class="fn">NTILE</span>(<span class="num-lit">5</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> recency <span class="kw">DESC</span>) r,
+    <span class="fn">NTILE</span>(<span class="num-lit">5</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> frequency <span class="kw">ASC</span>)  f,
+    <span class="fn">NTILE</span>(<span class="num-lit">5</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> monetary <span class="kw">ASC</span>)   m
+  <span class="kw">FROM</span> RFM
+)
+<span class="cmt">-- segment logic, then GROUP BY segment</span></pre>
+      </div>
+    </div>
+
+    <!-- 1.3 COHORT RETENTION -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">1.3 · COHORT RETENTION</div>
+        <div class="metric-title">Month-0 to Month-6 Retention % by Cohort</div>
+        <div class="metric-desc">
+          January 2024 cohort (17 customers) is the only one with visible multi-month retention —
+          dropping to ~12% at months 3–4, then recovering to 53% at Month 5 as multi-order customers
+          placed second orders in June. Later cohorts show only Month 0 data because the dataset
+          ends in July 2024. Lines show breaks (spanGaps: false) where data is genuinely absent —
+          interpolated lines would misrepresent the data.
+          <span class="chart-type-badge">Line · retention curves require a continuous time axis to show decay shape</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c1-cohort"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="cmt">-- Cohort retention Month 0–6</span>
+<span class="kw">WITH</span> base <span class="kw">AS</span> (
+  <span class="kw">SELECT DISTINCT</span> o.customer_id,
+    <span class="fn">MIN</span>(<span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date)) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> o.customer_id) cohort_month,
+    <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date) activity_month
+  <span class="kw">FROM</span> orders o <span class="kw">WHERE</span> o.order_status = <span class="str">'delivered'</span>
+)
+<span class="cmt">-- monthly_counts → retention_pct via window function</span></pre>
+      </div>
+    </div>
+
+    <!-- 1.4 CHURN RISK TABLE -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">1.4 · CHURN RISK FLAGGING</div>
+        <div class="metric-title">At-Risk Customers by Bucket & Spend</div>
+        <div class="metric-desc">
+          50 customers flagged across three risk buckets. 3 customers are fully Churned (180+ days).
+          Critically, the highest-spend churned customers include Customer 1 (₹108K, Gold, paid_search)
+          and Customer 36 (₹97K, Silver, paid_search) — these represent the highest recovery ROI targets.
+          Sorted by total_spend descending so CRM teams act on highest-value risks first.
+          <span class="chart-type-badge tabular-badge">Tabular output — multi-dimensional data</span>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="t1-churn"></table>
+      </div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span> o.customer_id,
+  (<span class="kw">SELECT</span> <span class="fn">MAX</span>(order_date)<span class="kw">::</span><span class="fn">date</span> <span class="kw">FROM</span> orders) - <span class="fn">MAX</span>(o.order_date)<span class="kw">::</span><span class="fn">date</span> days_since_last_order,
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> ... >= <span class="num-lit">180</span> <span class="kw">THEN</span> <span class="str">'Churned'</span>
+    <span class="kw">WHEN</span> ... <span class="kw">BETWEEN</span> <span class="num-lit">90</span> <span class="kw">AND</span> <span class="num-lit">179</span> <span class="kw">THEN</span> <span class="str">'Churning'</span>
+    <span class="kw">WHEN</span> ... <span class="kw">BETWEEN</span> <span class="num-lit">60</span> <span class="kw">AND</span> <span class="num-lit">89</span>  <span class="kw">THEN</span> <span class="str">'Early Churn Risk'</span>
+  <span class="kw">END</span> bucket, ...
+<span class="kw">HAVING</span> ... >= <span class="num-lit">60</span>
+<span class="kw">ORDER BY</span> total_spend <span class="kw">DESC</span>;</pre>
+      </div>
+    </div>
+
+    <!-- 1.5 LTV BY CHANNEL -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">1.5 · LTV BY ACQUISITION CHANNEL</div>
+        <div class="metric-title">Computed LTV vs Average Spend Per Customer</div>
+        <div class="metric-desc">
+          Paid search generates the highest computed LTV (₹10,929) driven by the longest customer lifespan
+          (0.15 yrs avg). Referral and social have very low LTV because lifespan is near zero
+          — most are single-order customers. Known limitation: single-order customers have lifespan = 0,
+          zeroing out computed_ltv. A 12-month box LTV would be more robust for these segments.
+          <span class="chart-type-badge">Bar · single continuous metric across categorical channels</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c1-ltv"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="cmt">-- LTV = AOV × avg_frequency × avg_lifespan</span>
+<span class="kw">WITH</span> customer_summary <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> c.customer_id, c.acquisition_channel,
+    <span class="fn">SUM</span>(o.net_amount) customer_revenue,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id) customer_order_volume,
+    <span class="fn">ROUND</span>(<span class="num-lit">1.0</span>*(<span class="fn">MAX</span>(o.order_date)<span class="kw">::</span><span class="fn">date</span>-<span class="fn">MIN</span>(o.order_date)<span class="kw">::</span><span class="fn">date</span>)/<span class="num-lit">365</span>,<span class="num-lit">2</span>) customer_lifespan
+  <span class="kw">FROM</span> customers c <span class="kw">JOIN</span> orders o <span class="kw">ON</span> c.customer_id=o.customer_id
+  <span class="kw">WHERE</span> o.order_status=<span class="str">'delivered'</span> <span class="kw">GROUP BY</span> c.customer_id, c.acquisition_channel
+)
+<span class="kw">SELECT</span> acquisition_channel,
+  <span class="fn">ROUND</span>((<span class="num-lit">1.0</span>*<span class="fn">SUM</span>(customer_revenue)/<span class="fn">SUM</span>(customer_order_volume))*<span class="fn">AVG</span>(customer_order_volume)*<span class="fn">AVG</span>(customer_lifespan),<span class="num-lit">2</span>) computed_ltv
+<span class="kw">FROM</span> customer_summary <span class="kw">GROUP BY</span> acquisition_channel <span class="kw">ORDER BY</span> computed_ltv <span class="kw">DESC</span>;</pre>
+      </div>
+    </div>
+
+  </div><!-- /metrics-grid -->
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PROJECT 2 — REVENUE & MARGIN
+═══════════════════════════════════════════════════════ -->
+<section id="p2" class="proj-section">
+  <div class="proj-header">
+    <span class="proj-num">02</span>
+    <div>
+      <div class="proj-title">Revenue & Margin Intelligence</div>
+      <div class="proj-sub">Monthly GMV · Contribution margin by category · Discount depth · MoM growth · Revenue concentration</div>
+    </div>
+  </div>
+  <div class="metrics-grid">
+
+    <!-- 2.1 MONTHLY GMV -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">2.1 · MONTHLY GMV VS REALIZED REVENUE</div>
+        <div class="metric-title">Gross GMV, Net Revenue & Realized Revenue by Month</div>
+        <div class="metric-desc">
+          January 2024 dominates at ₹1.1M GMV — many high-value electronics orders at launch.
+          March shows the worst leakage (45.95%) driven by 3 cancellations. February had
+          19.42% leakage from one large return (₹52,199 OnePlus 12 wrong-item return).
+          The gap between GMV bars and realized revenue bars visualises monthly leakage in absolute terms.
+          <span class="chart-type-badge">Grouped Bar · comparing three parallel revenue measures for the same period</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c2-gmv"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span>
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date) order_month,
+  <span class="fn">SUM</span>(o.gross_amount) gross_merchandise_value,
+  <span class="fn">SUM</span>(o.net_amount) net_revenue,
+  <span class="fn">SUM</span>(o.net_amount) - <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> o.order_status <span class="kw">IN</span> (<span class="str">'cancelled'</span>,<span class="str">'returned'</span>) <span class="kw">THEN</span> o.net_amount <span class="kw">ELSE</span> <span class="num-lit">0</span> <span class="kw">END</span>) realized_revenue,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> o.order_status <span class="kw">IN</span> (<span class="str">'cancelled'</span>,<span class="str">'returned'</span>) <span class="kw">THEN</span> o.net_amount <span class="kw">ELSE</span> <span class="num-lit">0</span> <span class="kw">END</span>)/<span class="fn">NULLIF</span>(<span class="fn">SUM</span>(o.net_amount),<span class="num-lit">0</span>),<span class="num-lit">2</span>) leakage_rate_pct
+<span class="kw">FROM</span> orders o
+<span class="kw">GROUP BY</span> <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date)
+<span class="kw">ORDER BY</span> order_month;</pre>
+      </div>
+    </div>
+
+    <!-- 2.2 CATEGORY MARGIN -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">2.2 · CONTRIBUTION MARGIN BY CATEGORY</div>
+        <div class="metric-title">Gross Profit % by Category</div>
+        <div class="metric-desc">
+          Grocery/Snacks (99.95%) and Beauty/Makeup (97.56%) lead on margin %. Laptops show
+          negative gross margin (−8.29%) — COGS exceed line_total revenue in the seed data,
+          which would trigger a pricing audit in production. Women's Clothing has negative
+          net platform take (−₹14,069) because returns absorb all commission.
+          <span class="chart-type-badge">Horizontal Bar · ranking categories by margin % makes outliers immediately visible</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c2-margin"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span>
+  ca.parent_category, ca.category_name,
+  <span class="fn">SUM</span>(oi.line_total) - <span class="fn">SUM</span>(oi.quantity*p.cost_price)
+    - <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> oi.is_returned=<span class="kw">true</span> <span class="kw">THEN</span> oi.line_total <span class="kw">ELSE</span> <span class="num-lit">0</span> <span class="kw">END</span>) gross_profit,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*(...)/<span class="fn">NULLIF</span>(<span class="fn">SUM</span>(oi.line_total),<span class="num-lit">0</span>),<span class="num-lit">2</span>) gross_profit_pct,
+  <span class="fn">ROUND</span>(<span class="fn">SUM</span>(oi.line_total*ca.commission_rate)
+    - <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> oi.is_returned=<span class="kw">true</span> <span class="kw">THEN</span> oi.line_total <span class="kw">ELSE</span> <span class="num-lit">0</span> <span class="kw">END</span>),<span class="num-lit">2</span>) net_platform_take
+<span class="kw">FROM</span> categories ca <span class="kw">JOIN</span> products p ... <span class="kw">JOIN</span> order_items oi ...
+<span class="kw">WHERE</span> o.order_status = <span class="str">'delivered'</span>
+<span class="kw">GROUP BY</span> ca.parent_category, ca.category_name
+<span class="kw">ORDER BY</span> gross_profit <span class="kw">DESC</span>;</pre>
+      </div>
+    </div>
+
+    <!-- 2.3 DISCOUNT DEPTH -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">2.3 · DISCOUNT DEPTH ANALYSIS</div>
+        <div class="metric-title">Margin % and Revenue by Discount Bucket</div>
+        <div class="metric-desc">
+          The 1–10% discount bucket (34 items, ₹1.57M revenue) has dramatically lower avg margin (4%)
+          than No Discount (48%) or 11–20% (56%). This is driven by category mix:
+          1–10% bucket is dominated by electronics (smartphones, laptops) which have high absolute
+          revenue but thin margins. No Discount items skew toward grocery and beauty — small basket,
+          high margin. 11–20% discount items include mid-price headphones and fashion with better margins.
+          <span class="chart-type-badge">Grouped Bar · comparing revenue size and margin rate together shows which buckets create value</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c2-discount"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> bucketing <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    <span class="kw">CASE</span>
+      <span class="kw">WHEN</span> oi.discount_pct = <span class="num-lit">0</span>          <span class="kw">THEN</span> <span class="str">'No Discount'</span>
+      <span class="kw">WHEN</span> oi.discount_pct <= <span class="num-lit">0.10</span>      <span class="kw">THEN</span> <span class="str">'1-10%'</span>
+      <span class="kw">WHEN</span> oi.discount_pct <= <span class="num-lit">0.20</span>      <span class="kw">THEN</span> <span class="str">'11-20%'</span>
+    <span class="kw">END</span> bucket, ...
+  <span class="kw">FROM</span> order_items oi <span class="kw">JOIN</span> products p ... <span class="kw">JOIN</span> orders o ...
+  <span class="kw">WHERE</span> o.order_status = <span class="str">'delivered'</span>
+)
+<span class="kw">SELECT</span> bucket, <span class="fn">COUNT</span>(item_id), <span class="fn">SUM</span>(revenue), <span class="fn">ROUND</span>(<span class="fn">AVG</span>(gross_profit/<span class="fn">NULLIF</span>(revenue,<span class="num-lit">0</span>)),<span class="num-lit">2</span>) avg_margin_pct
+<span class="kw">FROM</span> bucketing <span class="kw">GROUP BY</span> bucket;</pre>
+      </div>
+    </div>
+
+    <!-- 2.4 MOM GROWTH -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">2.4 · MONTH-OVER-MONTH REVENUE GROWTH</div>
+        <div class="metric-title">Realized Revenue & MoM Growth % by Month</div>
+        <div class="metric-desc">
+          Revenue dropped 80% from January to February — January was inflated by high-value
+          electronics orders, not a sustainable baseline. April's +127% MoM recovery is real
+          but from a low base. YoY growth returns NULL for all months because the dataset
+          only covers 7 months — no prior-year data exists. This is expected behaviour.
+          <span class="chart-type-badge">Line + Bar combo · bar shows absolute revenue, line shows MoM growth rate on secondary axis</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c2-mom"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> cte <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, order_date) order_month, <span class="fn">SUM</span>(net_amount) revenue
+  <span class="kw">FROM</span> orders <span class="kw">WHERE</span> order_status = <span class="str">'delivered'</span>
+  <span class="kw">GROUP BY</span> <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, order_date)
+)
+<span class="kw">SELECT</span> order_month, revenue,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*(revenue-<span class="fn">LAG</span>(revenue,<span class="num-lit">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> order_month))
+    /<span class="fn">NULLIF</span>(<span class="fn">LAG</span>(revenue,<span class="num-lit">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> order_month),<span class="num-lit">0</span>),<span class="num-lit">2</span>) MoM_growth
+<span class="kw">FROM</span> cte;</pre>
+      </div>
+    </div>
+
+    <!-- 2.5 PARETO -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">2.5 · REVENUE CONCENTRATION — PARETO CURVE</div>
+        <div class="metric-title">Cumulative Revenue % vs Customer % (Top Customers)</div>
+        <div class="metric-desc">
+          Top 20% of customers (13 customers) account for ~75% of revenue — slightly below the
+          classic 80/20 rule but consistent with a young customer base. The crossover where
+          cumulative revenue exceeds 80% occurs around customer_pct 31.82% (Customer 21),
+          meaning roughly the top 32% drive 80%+ of revenue. High concentration = high
+          churn sensitivity among top customers.
+          <span class="chart-type-badge">Line · Pareto/Lorenz curves require a continuous cumulative axis</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c2-pareto"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> customer_wise_revenue <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> customer_id, <span class="fn">SUM</span>(net_amount) revenue
+  <span class="kw">FROM</span> orders <span class="kw">WHERE</span> order_status = <span class="str">'delivered'</span>
+  <span class="kw">GROUP BY</span> customer_id
+)
+<span class="kw">SELECT</span> customer_id,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">SUM</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> revenue <span class="kw">DESC</span>, customer_id <span class="kw">ASC</span>)/<span class="fn">SUM</span>(revenue) <span class="kw">OVER</span> (), <span class="num-lit">2</span>) cumulative_revenue_pct,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> revenue <span class="kw">DESC</span>)/<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(*) <span class="kw">OVER</span> (),<span class="num-lit">0</span>), <span class="num-lit">2</span>) customer_pct
+<span class="cmt">-- ROW_NUMBER ensures smooth curve even on tied revenue values</span>
+<span class="kw">FROM</span> customer_wise_revenue;</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PROJECT 3 — SUPPLY CHAIN & OPS
+═══════════════════════════════════════════════════════ -->
+<section id="p3" class="proj-section">
+  <div class="proj-header">
+    <span class="proj-num">03</span>
+    <div>
+      <div class="proj-title">Supply Chain & Operations Health</div>
+      <div class="proj-sub">OTDR by state · OTDR by seller tier · Return root cause · Payment failure · Fulfilment funnel · COD vs Prepaid</div>
+    </div>
+  </div>
+  <div class="metrics-grid">
+
+    <!-- 3.1 OTDR BY STATE -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">3.1 · ON-TIME DELIVERY RATE BY STATE</div>
+        <div class="metric-title">OTDR % by Shipping State (Delivered Orders)</div>
+        <div class="metric-desc">
+          Rajasthan leads the problem list at 25% OTDR (3 of 4 orders late), followed by Odisha (50%)
+          and Kerala (57%). Maharashtra, Karnataka, Uttar Pradesh, West Bengal, and 10 other states
+          achieved 100% OTDR. Only showing states with &gt;1 delivered order for meaningful comparison.
+          State-level OTDR drives courier SLA renegotiation and warehouse placement decisions.
+          <span class="chart-type-badge">Horizontal Bar · ranked by OTDR ascending so worst-performing states surface at top</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c3-otdr"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span>
+  o.shipping_state,
+  <span class="fn">COUNT</span>(o.order_id) total_orders,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> o.actual_delivery <= o.expected_delivery <span class="kw">THEN</span> o.order_id <span class="kw">END</span>)/<span class="fn">COUNT</span>(o.order_id),<span class="num-lit">2</span>) otdr_pct,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">CASE WHEN</span> o.actual_delivery > o.expected_delivery <span class="kw">THEN</span> o.actual_delivery-o.expected_delivery <span class="kw">ELSE</span> <span class="kw">NULL</span> <span class="kw">END</span>),<span class="num-lit">2</span>) avg_days_late
+<span class="kw">FROM</span> orders o
+<span class="kw">WHERE</span> o.order_status = <span class="str">'delivered'</span>
+<span class="kw">GROUP BY</span> o.shipping_state;</pre>
+      </div>
+    </div>
+
+    <!-- 3.2 OTDR BY SELLER TIER -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">3.2 · OTDR BY SELLER TIER</div>
+        <div class="metric-title">Delivery Performance vs Dispatch Speed by Tier</div>
+        <div class="metric-desc">
+          Elite sellers (avg 1.36 dispatch days) achieve 86.84% OTDR across 38 orders.
+          Counterintuitively, Standard sellers (2.80 dispatch days) post 85.71% OTDR —
+          comparable to Elite despite slower dispatch. This suggests the bottleneck is
+          courier last-mile, not seller dispatch, for most states. New seller tier has
+          zero delivered orders — correctly excluded by the inner join.
+          <span class="chart-type-badge">Grouped Bar · comparing OTDR and dispatch days together reveals whether speed drives delivery quality</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c3-seller-otdr"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span>
+  s.seller_tier,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(s.avg_dispatch_days),<span class="num-lit">2</span>) average_dispatch_days,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id) total_orders,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> o.actual_delivery<=o.expected_delivery <span class="kw">THEN</span> o.order_id <span class="kw">END</span>)
+    /<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id),<span class="num-lit">2</span>) otdr_pct
+<span class="kw">FROM</span> sellers s
+<span class="kw">JOIN</span> order_items oi <span class="kw">ON</span> s.seller_id = oi.seller_id
+<span class="kw">JOIN</span> orders o <span class="kw">ON</span> oi.order_id = o.order_id
+<span class="kw">WHERE</span> o.order_status = <span class="str">'delivered'</span>
+<span class="kw">GROUP BY</span> s.seller_tier;
+<span class="cmt">-- COUNT(DISTINCT) prevents duplicate inflation from multi-item orders</span></pre>
+      </div>
+    </div>
+
+    <!-- 3.3 PAYMENT FAILURE -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">3.3 · PAYMENT FAILURE RATE BY GATEWAY</div>
+        <div class="metric-title">Failure Rate % and Failed GMV by Gateway/Method</div>
+        <div class="metric-desc">
+          HDFC net_banking has the highest failure rate (33.33%) with ₹29,699 in failed GMV
+          from a timeout — the most actionable finding for gateway SLA renegotiation.
+          Razorpay debit_card at 22.22% with ₹16,654 failed GMV is the second priority.
+          UPI (GPay, PayTM) and COD show 0% failure — UPI reliability is a strong argument
+          for promoting it at checkout over net_banking.
+          <span class="chart-type-badge">Bar · single rate metric across gateways, sorted descending so worst performers lead</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c3-payment"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span>
+  p.payment_gateway, p.payment_method,
+  <span class="fn">COUNT</span>(p.payment_id) total_payment_attempts,
+  <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> p.payment_status=<span class="str">'failed'</span> <span class="kw">THEN</span> p.payment_id <span class="kw">END</span>) failed_payments,
+  <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> p.payment_status=<span class="str">'failed'</span> <span class="kw">THEN</span> p.amount <span class="kw">ELSE</span> <span class="num-lit">0</span> <span class="kw">END</span>) failed_gmv,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> p.payment_status=<span class="str">'failed'</span> <span class="kw">THEN</span> p.payment_id <span class="kw">END</span>)/<span class="fn">COUNT</span>(p.payment_id),<span class="num-lit">2</span>) failure_rate_pct,
+  <span class="fn">MODE</span>() <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> p.failure_reason) most_common_failure_reason
+<span class="kw">FROM</span> payments p
+<span class="kw">GROUP BY</span> p.payment_method, p.payment_gateway
+<span class="kw">ORDER BY</span> failure_rate_pct <span class="kw">DESC</span>;</pre>
+      </div>
+    </div>
+
+    <!-- 3.4 FULFILMENT FUNNEL -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">3.4 · FULFILMENT FUNNEL BY MONTH</div>
+        <div class="metric-title">Confirmation Rate, Delivery Rate & Return Rate % Monthly</div>
+        <div class="metric-desc">
+          March 2024 is the only month with cancellations (23.08% cancellation rate, 3 orders).
+          Return rates peaked in May (13.33%, 2 returns). January–February saw zero cancellations
+          and near-100% delivery rates — strong early performance. The funnel tracks each stage
+          owner: cancellations = checkout/pricing; returns = product quality/seller.
+          <span class="chart-type-badge">Line · funnel rates over time reveal which stages are improving or degrading month to month</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c3-funnel"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span>
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date)<span class="kw">::</span><span class="fn">date</span> order_month,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> o.order_status<><span class="str">'cancelled'</span> <span class="kw">THEN</span> o.order_id <span class="kw">END</span>)/<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(o.order_id),<span class="num-lit">0</span>),<span class="num-lit">2</span>) confirmation_rate_pct,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> o.order_status <span class="kw">IN</span> (<span class="str">'delivered'</span>,<span class="str">'returned'</span>) <span class="kw">THEN</span> o.order_id <span class="kw">END</span>)/<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(o.order_id),<span class="num-lit">0</span>),<span class="num-lit">2</span>) delivered_rate_pct,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> o.order_status=<span class="str">'returned'</span> <span class="kw">THEN</span> o.order_id <span class="kw">END</span>)
+    /<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> o.order_status <span class="kw">IN</span> (<span class="str">'delivered'</span>,<span class="str">'returned'</span>) <span class="kw">THEN</span> o.order_id <span class="kw">END</span>),<span class="num-lit">0</span>),<span class="num-lit">2</span>) returned_rate_pct
+<span class="kw">FROM</span> orders o <span class="kw">GROUP BY</span> <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date);</pre>
+      </div>
+    </div>
+
+    <!-- 3.5 COD vs PREPAID -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">3.5 · COD VS PREPAID ANALYSIS</div>
+        <div class="metric-title">Return Rate & AOV: COD vs Prepaid</div>
+        <div class="metric-desc">
+          COD return rate (16.67%) is 4× prepaid (4.05%) — consistent with the Indian ecommerce
+          industry norm where COD customers face no friction to reject delivery. Prepaid AOV
+          (₹30,762) is 8.6× COD AOV (₹3,568) — confirming high-value customers prefer prepaid.
+          This justifies restricting COD on high-value orders and offering prepaid incentives
+          (loyalty points, marginal discounts) to shift the payment mix.
+          <span class="chart-type-badge">Grouped Bar · comparing two independent metrics (return rate, AOV) side by side for two payment types</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c3-cod"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> payments_cte <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    (<span class="kw">CASE WHEN</span> pay.payment_method=<span class="str">'cod'</span> <span class="kw">THEN</span> <span class="str">'cod'</span> <span class="kw">ELSE</span> <span class="str">'prepaid'</span> <span class="kw">END</span>) payment_method,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> pay.order_id) order_count,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(pay.amount),<span class="num-lit">2</span>) net_amount_per_order, ...
+  <span class="kw">FROM</span> payments pay <span class="kw">GROUP BY</span> payment_method
+), returns_grouped <span class="kw">AS</span> (...)
+<span class="kw">SELECT</span> pc.payment_method,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COALESCE</span>(rg.total_returns,<span class="num-lit">0</span>)/<span class="fn">NULLIF</span>(pc.order_count,<span class="num-lit">0</span>),<span class="num-lit">2</span>) return_rate_pct
+<span class="kw">FROM</span> payments_cte pc <span class="kw">LEFT JOIN</span> returns_grouped rg ...
+<span class="cmt">-- LEFT JOIN ensures both COD and prepaid always appear</span></pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PROJECT 4 — MARKETING & ACQUISITION ROI
+═══════════════════════════════════════════════════════ -->
+<section id="p4" class="proj-section">
+  <div class="proj-header">
+    <span class="proj-num">04</span>
+    <div>
+      <div class="proj-title">Marketing & Acquisition ROI</div>
+      <div class="proj-sub">CAC by channel · Email funnel · Session → order conversion · Campaign ROI</div>
+    </div>
+  </div>
+  <div class="metrics-grid">
+
+    <!-- 4.1 CAC -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">4.1 · CUSTOMER ACQUISITION COST BY CHANNEL</div>
+        <div class="metric-title">CAC (₹) by Marketing Channel</div>
+        <div class="metric-desc">
+          Email has the lowest CAC (₹0.05) driven by near-zero send costs. Paid search CAC (₹1.00)
+          is modest in absolute terms but when paired with LTV of ₹10,929, delivers a strong
+          LTV:CAC ratio. Push/SMS shows null CAC — no customers in the seed dataset list
+          push/sms as their acquisition channel, making the denominator zero. Organic and
+          referral are excluded from this chart (no marketing_events spend tracked for them).
+          <span class="chart-type-badge">Bar · single metric per channel, descending order by CAC</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c4-cac"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> channel_expense <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    (<span class="kw">CASE</span>
+      <span class="kw">WHEN</span> me.channel <span class="kw">IN</span> (<span class="str">'google'</span>)              <span class="kw">THEN</span> <span class="str">'paid_search'</span>
+      <span class="kw">WHEN</span> me.channel <span class="kw">IN</span> (<span class="str">'meta'</span>,<span class="str">'instagram'</span>)    <span class="kw">THEN</span> <span class="str">'social'</span>
+      <span class="kw">WHEN</span> me.channel <span class="kw">IN</span> (<span class="str">'email'</span>)              <span class="kw">THEN</span> <span class="str">'email'</span>
+      <span class="kw">WHEN</span> me.channel <span class="kw">IN</span> (<span class="str">'push'</span>,<span class="str">'sms'</span>)         <span class="kw">THEN</span> <span class="str">'push_sms'</span>
+    <span class="kw">END</span>) channel_bucket,
+    <span class="fn">SUM</span>(me.cost_per_event) total_spend
+  <span class="kw">FROM</span> marketing_events me <span class="kw">GROUP BY</span> channel_bucket
+)
+<span class="cmt">-- CASE WHEN mapping bridges marketing_events channel labels to customers acquisition_channel</span>
+<span class="kw">SELECT</span> ce.channel_bucket, <span class="fn">ROUND</span>(ce.total_spend/<span class="fn">NULLIF</span>(a.customers_acquired,<span class="num-lit">0</span>),<span class="num-lit">2</span>) cac
+<span class="kw">FROM</span> channel_expense ce <span class="kw">LEFT JOIN</span> acquired a <span class="kw">ON</span> ce.channel_bucket=a.channel_bucket;</pre>
+      </div>
+    </div>
+
+    <!-- 4.2 EMAIL FUNNEL -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">4.2 · EMAIL CAMPAIGN FUNNEL</div>
+        <div class="metric-title">Open Rate, CTR & Purchase Conversion by Campaign</div>
+        <div class="metric-desc">
+          Win-Back Campaign Feb leads on open rate (80%). Diwali Sale 2024 leads on CTR (83.33%
+          of openers clicked). All three campaigns show 0% purchase conversion — this is because
+          Diwali Sale events are in October 2024 but orders in the seed data only go to July 2024,
+          so no orders fall within the 3-day attribution window. This is a data date-range
+          mismatch, not a query bug — the attribution logic is correct.
+          <span class="chart-type-badge">Grouped Bar · comparing three funnel stages across campaigns shows where each breaks down</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c4-email"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span> me.campaign_name,
+  <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> me.event_type=<span class="str">'email_sent'</span>    <span class="kw">THEN</span> <span class="num-lit">1</span> <span class="kw">END</span>) emails_sent,
+  <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> me.event_type=<span class="str">'email_opened'</span>  <span class="kw">THEN</span> <span class="num-lit">1</span> <span class="kw">END</span>) emails_opened,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> me.event_type=<span class="str">'email_clicked'</span> <span class="kw">THEN</span> me.customer_id <span class="kw">END</span>) unique_clickers,
+  <span class="fn">COUNT</span>(o.order_id) order_within_3_days,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span> * <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> me.event_type=<span class="str">'email_opened'</span> <span class="kw">THEN</span> <span class="num-lit">1</span> <span class="kw">END</span>)
+    / <span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> me.event_type=<span class="str">'email_sent'</span> <span class="kw">THEN</span> <span class="num-lit">1</span> <span class="kw">END</span>),<span class="num-lit">0</span>),<span class="num-lit">2</span>) open_rate_pct
+<span class="kw">FROM</span> marketing_events me
+<span class="kw">LEFT JOIN</span> orders o
+  <span class="kw">ON</span> me.customer_id=o.customer_id <span class="kw">AND</span> me.event_type=<span class="str">'email_clicked'</span>
+  <span class="kw">AND</span> o.order_date<span class="kw">::</span><span class="fn">date</span>-me.event_timestamp<span class="kw">::</span><span class="fn">date</span> <span class="kw">BETWEEN</span> <span class="num-lit">0</span> <span class="kw">AND</span> <span class="num-lit">3</span>
+<span class="kw">WHERE</span> me.channel=<span class="str">'email'</span> <span class="kw">GROUP BY</span> me.campaign_name;
+<span class="cmt">-- JOIN condition handles attribution; WHERE keeps all funnel rows</span></pre>
+      </div>
+    </div>
+
+    <!-- 4.3 SESSION PERFORMANCE -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">4.3 · CHANNEL PERFORMANCE — SESSIONS TO ORDERS</div>
+        <div class="metric-title">Revenue Per Session by UTM Source/Medium</div>
+        <div class="metric-desc">
+          Instagram social drives the highest revenue per session (₹49,055) — high-value customers
+          converting from social browsing. Direct traffic is second (₹37,770/session) reflecting
+          returning customers who skip search. Push/app has 100% bounce rate and ₹0 revenue —
+          push notifications need redesigning. Google CPC underperforms at ₹861/session despite
+          reasonable conversion rate, suggesting keyword targeting is off or landing pages are weak.
+          <span class="chart-type-badge">Bar · revenue per session normalises volume differences and enables like-for-like channel comparison</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c4-session"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">SELECT</span>
+  cs.utm_source, cs.utm_medium,
+  <span class="fn">COUNT</span>(cs.session_id) total_sessions,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> cs.bounce=<span class="kw">true</span> <span class="kw">THEN</span> cs.session_id <span class="kw">END</span>)/<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(cs.session_id),<span class="num-lit">0</span>),<span class="num-lit">2</span>) bounce_rate_pct,
+  <span class="fn">ROUND</span>(<span class="fn">COALESCE</span>(<span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> cs.converted=<span class="kw">true</span> <span class="kw">THEN</span> o.net_amount <span class="kw">END</span>),<span class="num-lit">0</span>)/<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(cs.session_id),<span class="num-lit">0</span>),<span class="num-lit">2</span>) revenue_per_session
+<span class="kw">FROM</span> customer_sessions cs
+<span class="kw">LEFT JOIN</span> orders o <span class="kw">ON</span> cs.session_id = o.session_id
+<span class="cmt">-- Joining on session_id (not customer_id) prevents fan-out attribution</span>
+<span class="kw">GROUP BY</span> cs.utm_source, cs.utm_medium;</pre>
+      </div>
+    </div>
+
+    <!-- 4.4 CAMPAIGN ROI -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">4.4 · CAMPAIGN ROI</div>
+        <div class="metric-title">Revenue Attributed & ROI % by Campaign</div>
+        <div class="metric-desc">
+          Google Remarketing Q1 shows 1,705,429% ROI and Meta Fashion 477,808% ROI — these
+          are technically correct but reflect the extremely low total seed spend (₹21 and ₹9 respectively)
+          creating a near-zero denominator. In production with realistic ad spend, ROI would be
+          in the 200–400% range. Email/push/SMS campaigns show −100% ROI because attribution
+          windows don't overlap with any orders (same date-range issue as Metric 4.2).
+          <span class="chart-type-badge">Bar · campaign ROI as a ranked bar enables direct budget reallocation decisions</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c4-roi"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> c1 <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> me.campaign_name, <span class="fn">SUM</span>(me.cost_per_event) total_campaign_spend,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> me.customer_id) customers_touched
+  <span class="kw">FROM</span> marketing_events me <span class="kw">GROUP BY</span> me.campaign_name
+), c2 <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> me.campaign_name, <span class="fn">SUM</span>(o.net_amount) revenue_attributed,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.customer_id) number_of_conversions
+  <span class="kw">FROM</span> orders o
+  <span class="kw">RIGHT JOIN</span> marketing_events me
+    <span class="kw">ON</span> o.customer_id=me.customer_id
+    <span class="kw">AND</span> o.order_date<span class="kw">::</span><span class="fn">date</span>-me.event_timestamp<span class="kw">::</span><span class="fn">date</span> <span class="kw">BETWEEN</span> <span class="num-lit">0</span> <span class="kw">AND</span> <span class="num-lit">7</span>
+    <span class="kw">AND</span> me.event_type <span class="kw">IN</span> (<span class="str">'email_clicked'</span>,<span class="str">'ad_clicked'</span>,<span class="str">'push_clicked'</span>,<span class="str">'sms_clicked'</span>)
+  <span class="kw">GROUP BY</span> me.campaign_name
+)
+<span class="kw">SELECT</span> c1.campaign_name,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*(<span class="fn">COALESCE</span>(c2.revenue_attributed,<span class="num-lit">0</span>)-c1.total_campaign_spend)/<span class="fn">NULLIF</span>(c1.total_campaign_spend,<span class="num-lit">0</span>),<span class="num-lit">2</span>) roi
+<span class="kw">FROM</span> c1 <span class="kw">LEFT JOIN</span> c2 <span class="kw">ON</span> c1.campaign_name=c2.campaign_name;</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PROJECT 5 — SELLER & CATEGORY
+═══════════════════════════════════════════════════════ -->
+<section id="p5" class="proj-section">
+  <div class="proj-header">
+    <span class="proj-num">05</span>
+    <div>
+      <div class="proj-title">Seller & Category Performance</div>
+      <div class="proj-sub">Seller scorecard · Top/bottom by GMV · Category velocity · Repeat purchase rate · New vs established seller GMV</div>
+    </div>
+  </div>
+  <div class="metrics-grid">
+
+    <!-- 5.1 SELLER SCORECARD -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">5.1 · SELLER SCORECARD</div>
+        <div class="metric-title">Composite Score by Seller (OTDR + Return Rate + GMV + Dispatch)</div>
+        <div class="metric-desc">
+          Sellers 1, 2, 6, 8 share the top composite score (85–90). Seller 1 (TechZone) leads GMV
+          at ₹1.03M. Sellers 22, 7, 4 are in Q4 — Seller 7 has a 40% return rate (seller fault)
+          and Seller 4 has 12.5% return rate, both disqualifying. Composite score weights:
+          OTDR 30pts, Return Rate 30pts, GMV 20pts, Dispatch Speed 20pts = 100pts total.
+          <span class="chart-type-badge">Bar · composite score as a single ranked bar makes tier promotion decisions straightforward</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c5-scorecard"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="cmt">-- Composite score: OTDR 30 + Return Rate 30 + GMV 20 + Dispatch 20</span>
+<span class="kw">WITH</span> attrib <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> s.seller_id,
+    <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="kw">CASE WHEN</span> o.actual_delivery<=o.expected_delivery <span class="kw">THEN</span> o.order_id <span class="kw">END</span>)/<span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id),<span class="num-lit">2</span>) otdr_pct,
+    <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(r.return_id)/<span class="fn">COUNT</span>(oi.item_id),<span class="num-lit">2</span>) return_rate_pct,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(o.actual_delivery<span class="kw">::</span><span class="fn">date</span>-o.order_date<span class="kw">::</span><span class="fn">date</span>-s.avg_dispatch_days)<span class="kw">::</span><span class="fn">decimal</span>,<span class="num-lit">2</span>) dispatch_to_delivery_days
+  <span class="kw">FROM</span> sellers s <span class="kw">LEFT JOIN</span> order_items oi ... <span class="kw">LEFT JOIN</span> orders o ... <span class="kw">LEFT JOIN</span> returns r ...
+  <span class="kw">WHERE</span> o.order_status=<span class="str">'delivered'</span> <span class="kw">GROUP BY</span> s.seller_id
+), comp <span class="kw">AS</span> (...)
+<span class="kw">SELECT</span> *, <span class="fn">NTILE</span>(<span class="num-lit">4</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> composite_score <span class="kw">DESC</span>) performance_quartile
+<span class="kw">FROM</span> comp;</pre>
+      </div>
+    </div>
+
+    <!-- 5.2 TOP/BOTTOM SELLERS -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">5.2 · TOP & BOTTOM SELLERS BY TIER</div>
+        <div class="metric-title">GMV for Top-3 and Bottom-3 Sellers Within Each Tier</div>
+        <div class="metric-desc">
+          The Elite tier shows the widest GMV spread: Seller 1 (₹1.03M) vs Seller 2 (₹12,825) —
+          an 80× gap. This confirms the Elite tier definition is too broad; Seller 1 is in a
+          different performance class. Standard tier has 6 sellers and a meaningful spread
+          (Seller 11 at ₹280K vs Seller 23 at ₹2,478). RANK() is used to surface ties,
+          not ROW_NUMBER() which would arbitrarily break them.
+          <span class="chart-type-badge tabular-badge">Tabular output — multi-dimensional data</span>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="t5-sellers"></table>
+      </div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> seller_gmv <span class="kw">AS</span> (...),
+ranked_sellers <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> seller_tier, seller_id, gmv,
+    <span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> seller_tier <span class="kw">ORDER BY</span> gmv <span class="kw">DESC</span>) top_ranks,
+    <span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> seller_tier <span class="kw">ORDER BY</span> gmv <span class="kw">ASC</span>)  bottom_ranks
+  <span class="kw">FROM</span> seller_gmv
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> ranked_sellers
+<span class="kw">WHERE</span> top_ranks <= <span class="num-lit">3</span> <span class="kw">OR</span> bottom_ranks <= <span class="num-lit">3</span>
+<span class="kw">ORDER BY</span> seller_tier, gmv <span class="kw">DESC</span>;
+<span class="cmt">-- RANK() surfaces tied sellers; ROW_NUMBER() would hide ties</span></pre>
+      </div>
+    </div>
+
+    <!-- 5.3 REPEAT PURCHASE -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">5.3 · REPEAT PURCHASE RATE BY CATEGORY</div>
+        <div class="metric-title">Repeat Buyer % by Parent Category</div>
+        <div class="metric-desc">
+          Electronics is the only category with repeat buyers (6.25%, 2 of 32 buyers).
+          All other categories — Beauty, Fashion, Grocery, Home — show 0% repeat rate.
+          This is largely a data density artefact: most customers have only one order
+          in the dataset. In production with richer data, Beauty and Grocery should
+          show the highest repeat rates (consumable, frequent-repurchase categories).
+          <span class="chart-type-badge">Bar · single rate metric across categories, sorted to highlight the one non-zero outlier</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c5-repeat"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> by_customer <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> c.parent_category, o.customer_id, <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id) orders_placed
+  <span class="kw">FROM</span> categories c <span class="kw">JOIN</span> products p ... <span class="kw">JOIN</span> order_items oi ... <span class="kw">JOIN</span> orders o ...
+  <span class="kw">WHERE</span> o.order_status=<span class="str">'delivered'</span>
+  <span class="kw">GROUP BY</span> c.parent_category, o.customer_id
+)
+<span class="kw">SELECT</span>
+  parent_category,
+  <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> orders_placed>=<span class="num-lit">2</span> <span class="kw">THEN</span> <span class="num-lit">1</span> <span class="kw">END</span>) repeat_buyers,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> orders_placed>=<span class="num-lit">2</span> <span class="kw">THEN</span> <span class="num-lit">1</span> <span class="kw">END</span>)/<span class="fn">NULLIF</span>(<span class="fn">COUNT</span>(customer_id),<span class="num-lit">0</span>),<span class="num-lit">2</span>) repeat_purchase_rate_pct
+<span class="kw">FROM</span> by_customer <span class="kw">GROUP BY</span> parent_category;</pre>
+      </div>
+    </div>
+
+    <!-- 5.4 NEW vs ESTABLISHED -->
+    <div class="metric">
+      <div class="metric-head">
+        <div class="metric-num">5.4 · NEW VS ESTABLISHED SELLER GMV</div>
+        <div class="metric-title">Monthly GMV Share: New vs Established Sellers</div>
+        <div class="metric-desc">
+          Established sellers consistently contribute ~83–95% of GMV. New sellers (onboarded
+          within 18 months) hold a ~15% share in most months, peaking at 23% in April 2024.
+          May and July show the lowest new-seller contribution (5.3% and 0%) — only 1 new seller
+          active those months. A healthy marketplace target is 15–25% new-seller GMV share,
+          so CartIQ is at the lower bound but not alarming.
+          <span class="chart-type-badge">Stacked Bar · part-to-whole composition over time; stacking shows how new/established share evolves</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="c5-newvest"></canvas></div>
+      <div class="sql-toggle" onclick="toggleSQL(this)">
+        <span class="sql-toggle-label">View SQL</span><span class="sql-toggle-icon">▼</span>
+      </div>
+      <div class="sql-block">
+        <pre><span class="kw">WITH</span> seller_onboarding <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> s.seller_id,
+    <span class="fn">EXTRACT</span>(year <span class="kw">FROM</span> (<span class="kw">SELECT</span> <span class="fn">MAX</span>(o.order_date) <span class="kw">FROM</span> orders o)) * <span class="num-lit">12</span>
+    - <span class="fn">EXTRACT</span>(year <span class="kw">FROM</span> s.onboarded_at) * <span class="num-lit">12</span>
+    + <span class="fn">EXTRACT</span>(month <span class="kw">FROM</span> (<span class="kw">SELECT</span> <span class="fn">MAX</span>(o.order_date) <span class="kw">FROM</span> orders o))
+    - <span class="fn">EXTRACT</span>(month <span class="kw">FROM</span> s.onboarded_at) gap
+  <span class="kw">FROM</span> sellers s
+)
+<span class="kw">SELECT</span> sb.buckets, <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date)<span class="kw">::</span><span class="fn">date</span> order_month,
+  <span class="fn">SUM</span>(oi.line_total) gmv_by_bucket,
+  <span class="fn">ROUND</span>(<span class="num-lit">100.0</span>*<span class="fn">SUM</span>(oi.line_total)/<span class="fn">NULLIF</span>(<span class="fn">SUM</span>(<span class="fn">SUM</span>(oi.line_total)) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date)),<span class="num-lit">0</span>),<span class="num-lit">2</span>) gmv_pct
+<span class="cmt">-- Nested window: inner SUM aggregates bucket×month; outer SUM totals across buckets per month</span></pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     SANDBOX
+═══════════════════════════════════════════════════════ -->
+<section id="sandbox">
+  <div class="sandbox-box">
+    <div class="sandbox-header">
+      <div>
+        <h2>SQL Results Sandbox</h2>
+        <p>Paste any CSV query output. Pick a chart type or render as a table — the sandbox auto-detects numeric columns and builds the visual instantly.</p>
+      </div>
+    </div>
+    <textarea id="sandbox-input" placeholder="Paste CSV here (header row required) — e.g. month,revenue,orders&#10;Jan,106079,17&#10;Feb,216577,14"></textarea>
+
+    <!-- chart type picker -->
+    <div class="sb-chart-row">
+      <span class="sb-label">Render as:</span>
+      <div class="sb-chart-types">
+        <button class="sb-type active" data-type="table" onclick="setSbType(this,'table')">
+          <span class="sb-icon">⊞</span> Table
+        </button>
+        <button class="sb-type" data-type="bar" onclick="setSbType(this,'bar')">
+          <span class="sb-icon">▊</span> Bar
+        </button>
+        <button class="sb-type" data-type="hbar" onclick="setSbType(this,'hbar')">
+          <span class="sb-icon">▬</span> Horiz Bar
+        </button>
+        <button class="sb-type" data-type="line" onclick="setSbType(this,'line')">
+          <span class="sb-icon">╱</span> Line
+        </button>
+        <button class="sb-type" data-type="stacked" onclick="setSbType(this,'stacked')">
+          <span class="sb-icon">▩</span> Stacked Bar
+        </button>
+        <button class="sb-type" data-type="pie" onclick="setSbType(this,'pie')">
+          <span class="sb-icon">◑</span> Pie
+        </button>
+      </div>
+      <!-- column pickers — shown after parse -->
+      <div id="sb-col-pickers" style="display:none;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem">
+        <span class="sb-label">Label col:</span>
+        <select id="sb-label-col" class="sb-select"></select>
+        <span class="sb-label">Value col(s):</span>
+        <div id="sb-value-cols" style="display:flex;gap:.4rem;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div class="sandbox-controls">
+      <button class="btn-primary" onclick="renderSandbox()">Render</button>
+      <button class="btn-secondary" onclick="clearSandbox()">Clear</button>
+    </div>
+
+    <div id="sandbox-msg"></div>
+    <div id="sandbox-output">
+      <!-- chart lives here -->
+      <div id="sb-chart-wrap" style="display:none;padding:1rem 0"><canvas id="sb-canvas" style="height:300px!important"></canvas></div>
+      <!-- table lives here -->
+      <div id="sb-table-wrap"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  CartIQ E-Commerce SQL Portfolio · PostgreSQL 15 · 5 Projects · 25 Metrics · Seller Tiers · COD vs Prepaid · UPI Rail · Indian Marketplace Analytics · Built with Chart.js
+</footer>
+
+<script>
+/* ── HELPERS ─────────────────────────────────────────────────────────── */
+const ACC = '#FF9900';
+const ACC2 = '#e68a00';
+const BLUE = '#60a5fa';
+const GREEN = '#34d399';
+const RED = '#f87171';
+const PURPLE = '#a78bfa';
+const GRID = 'rgba(255,255,255,0.06)';
+const TICK = '#666';
+
+const DEFAULTS = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{labels:{color:'#a0a0a0',font:{family:"'JetBrains Mono',monospace",size:11},boxWidth:12,padding:14}},tooltip:{backgroundColor:'#1e1e1e',borderColor:'#333',borderWidth:1,titleColor:'#f0f0f0',bodyColor:'#a0a0a0',padding:10}},
+  scales:{x:{grid:{color:GRID},ticks:{color:TICK,font:{family:"'JetBrains Mono',monospace",size:10}}},y:{grid:{color:GRID},ticks:{color:TICK,font:{family:"'JetBrains Mono',monospace",size:10}}}}
+};
+
+function mk(id,cfg){
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  return new Chart(ctx,cfg);
+}
+function fmt(n){return new Intl.NumberFormat('en-IN',{maximumFractionDigits:0}).format(n)}
+
+/* ── 1.1 AOV BY TIER ─────────────────────────────────────────────────── */
+mk('c1-aov',{
+  type:'bar',
+  data:{
+    labels:['Bronze','Platinum','Gold','Silver'],
+    datasets:[
+      {label:'AOV (₹)',data:[39973,29585,27003,21968],backgroundColor:ACC+'cc',borderRadius:4,yAxisID:'y'},
+      {label:'Avg Orders / Customer',data:[1.30,1.67,1.16,1.04],backgroundColor:BLUE+'99',borderRadius:4,yAxisID:'y2'}
+    ]
+  },
+  options:{...DEFAULTS,scales:{
+    x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}}},
+    y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+fmt(v)},position:'left',title:{display:true,text:'AOV (₹)',color:TICK,font:{size:10}}},
+    y2:{grid:{display:false},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}},position:'right',title:{display:true,text:'Avg Orders',color:TICK,font:{size:10}}}
+  }}
+});
+
+/* ── 1.2 RFM ─────────────────────────────────────────────────────────── */
+mk('c1-rfm',{
+  type:'bar',
+  data:{
+    labels:['Champion','Needs Attention','Loyal','At Risk','New Customer','Lost'],
+    datasets:[{
+      label:'Customers',
+      data:[17,19,12,10,5,3],
+      backgroundColor:[ACC+'dd',PURPLE+'99',BLUE+'99',RED+'99',GREEN+'99','#888899'],
+      borderRadius:4
+    }]
+  },
+  options:{...DEFAULTS,indexAxis:'y',
+    plugins:{...DEFAULTS.plugins,legend:{display:false}},
+    scales:{
+      x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}}},
+      y:{grid:{display:false},ticks:{color:'#ccc',font:{size:11,family:"'JetBrains Mono',monospace"}}}
+    }
+  }
+});
+
+/* ── 1.3 COHORT RETENTION ────────────────────────────────────────────── */
+(function(){
+  const months=['M0','M1','M2','M3','M4','M5','M6'];
+  const jan=[100,null,null,11.76,11.76,52.94,null];
+  const feb=[100,null,null,null,7.69,null,null];
+  const apr=[100,null,7.69,null,null,null,null];
+  mk('c1-cohort',{
+    type:'line',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'Jan 2024 (n=17)',data:jan,borderColor:ACC,backgroundColor:ACC+'22',tension:.3,pointRadius:4,pointBackgroundColor:ACC,spanGaps:false},
+        {label:'Feb 2024 (n=13)',data:feb,borderColor:BLUE,backgroundColor:BLUE+'22',tension:.3,pointRadius:4,pointBackgroundColor:BLUE,spanGaps:false},
+        {label:'Apr 2024 (n=13)',data:apr,borderColor:GREEN,backgroundColor:GREEN+'22',tension:.3,pointRadius:4,pointBackgroundColor:GREEN,spanGaps:false}
+      ]
+    },
+    options:{...DEFAULTS,
+      plugins:{...DEFAULTS.plugins},
+      scales:{
+        x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}}},
+        y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},min:0,max:110}
+      }
+    }
+  });
+})();
+
+/* ── 1.4 CHURN RISK TABLE ────────────────────────────────────────────── */
+(function(){
+  const data=[
+    [1,192,'Churned','gold','paid_search',1,'₹1,07,999'],
+    [36,174,'Churning','silver','paid_search',1,'₹97,191'],
+    [44,117,'Churning','bronze','email',1,'₹94,491'],
+    [62,106,'Churning','silver','organic',1,'₹56,691'],
+    [9,79,'Early Churn Risk','gold','referral',2,'₹54,698'],
+    [42,86,'Early Churn Risk','gold','organic',1,'₹53,999'],
+    [64,69,'Early Churn Risk','silver','email',1,'₹51,022'],
+    [99,61,'Early Churn Risk','silver','paid_search',1,'₹42,281'],
+    [21,172,'Churning','gold','paid_search',1,'₹40,499'],
+    [92,106,'Churning','gold','organic',1,'₹36,449'],
+  ];
+  const bucketColor={'Churned':RED,'Churning':'#fbbf24','Early Churn Risk':GREEN};
+  const t=document.getElementById('t1-churn');
+  t.innerHTML=`<thead><tr><th>Cust ID</th><th>Days Since</th><th>Bucket</th><th>Tier</th><th>Channel</th><th>Orders</th><th>Total Spend</th></tr></thead><tbody>${
+    data.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td style="color:${bucketColor[r[2]]};font-weight:600">${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td class="num">${r[5]}</td><td class="num accent">${r[6]}</td></tr>`).join('')
+  }</tbody>`;
+})();
+
+/* ── 1.5 LTV BY CHANNEL ──────────────────────────────────────────────── */
+mk('c1-ltv',{
+  type:'bar',
+  data:{
+    labels:['Paid Search','Email','Organic','Social','Referral'],
+    datasets:[{
+      label:'Computed LTV (₹)',
+      data:[10929,2023,1565,602,257],
+      backgroundColor:[ACC+'ee',BLUE+'99',GREEN+'99',PURPLE+'99',RED+'99'],
+      borderRadius:4
+    }]
+  },
+  options:{...DEFAULTS,
+    plugins:{...DEFAULTS.plugins,legend:{display:false}},
+    scales:{
+      x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}}},
+      y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+fmt(v)}}
+    }
+  }
+});
+
+/* ── 2.1 MONTHLY GMV ─────────────────────────────────────────────────── */
+mk('c2-gmv',{
+  type:'bar',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul'],
+    datasets:[
+      {label:'Gross GMV',data:[1230645,298398,298137,386917,269604,256987,10499],backgroundColor:'#ff990055',borderColor:ACC,borderWidth:1,borderRadius:3},
+      {label:'Net Revenue',data:[1106079,268776,281246,348583,243298,231468,9449],backgroundColor:BLUE+'44',borderColor:BLUE,borderWidth:1,borderRadius:3},
+      {label:'Realized Revenue',data:[1106079,216577,152008,345164,238350,208969,9449],backgroundColor:GREEN+'44',borderColor:GREEN,borderWidth:1,borderRadius:3}
+    ]
+  },
+  options:{...DEFAULTS,scales:{
+    x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}}},
+    y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+fmt(v)}}
+  }}
+});
+
+/* ── 2.2 CATEGORY MARGIN ─────────────────────────────────────────────── */
+(function(){
+  const labels=['Snacks (Grocery)','Makeup (Beauty)','Men Clothing','Skincare','Furniture','Women Clothing','Headphones','Smartphones','Kitchen Appliances','Laptops'];
+  const vals=[99.95,97.56,64.42,68.68,35.54,40.50,24.46,18.45,60.97,-8.29];
+  const colors=vals.map(v=>v<0?RED+'cc':v>80?GREEN+'cc':ACC+'aa');
+  mk('c2-margin',{
+    type:'bar',
+    data:{labels,datasets:[{label:'Gross Profit %',data:vals,backgroundColor:colors,borderRadius:3}]},
+    options:{...DEFAULTS,indexAxis:'y',
+      plugins:{...DEFAULTS.plugins,legend:{display:false}},
+      scales:{
+        x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'}},
+        y:{grid:{display:false},ticks:{color:'#ccc',font:{size:10,family:"'JetBrains Mono',monospace"}}}
+      }
+    }
+  });
+})();
+
+/* ── 2.3 DISCOUNT DEPTH ──────────────────────────────────────────────── */
+mk('c2-discount',{
+  type:'bar',
+  data:{
+    labels:['No Discount','1–10%','11–20%'],
+    datasets:[
+      {label:'Total Revenue (₹)',data:[328760,1573987,125667],backgroundColor:BLUE+'88',borderRadius:4,yAxisID:'y'},
+      {label:'Avg Margin %',data:[0.48,0.04,0.56],backgroundColor:GREEN+'88',borderRadius:4,yAxisID:'y2'}
+    ]
+  },
+  options:{...DEFAULTS,scales:{
+    x:{grid:{color:GRID},ticks:{color:TICK,font:{size:11,family:"'JetBrains Mono',monospace"}}},
+    y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+fmt(v)},position:'left'},
+    y2:{grid:{display:false},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>(v*100).toFixed(0)+'%'},position:'right'}
+  }}
+});
+
+/* ── 2.4 MOM GROWTH ──────────────────────────────────────────────────── */
+(function(){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul'];
+  const rev=[1106079,216577,152008,345164,238350,208969,9449];
+  const mom=[null,-80.42,-29.81,127.07,-30.95,-12.33,-95.48];
+  mk('c2-mom',{
+    type:'bar',
+    data:{labels:months,datasets:[
+      {type:'bar',label:'Realized Revenue (₹)',data:rev,backgroundColor:ACC+'66',borderColor:ACC,borderWidth:1,borderRadius:3,yAxisID:'y'},
+      {type:'line',label:'MoM Growth %',data:mom,borderColor:BLUE,backgroundColor:'transparent',tension:.3,pointRadius:4,pointBackgroundColor:BLUE,yAxisID:'y2',spanGaps:false}
+    ]},
+    options:{...DEFAULTS,scales:{
+      x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}}},
+      y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+fmt(v)},position:'left'},
+      y2:{grid:{display:false},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},position:'right'}
+    }}
+  });
+})();
+
+/* ── 2.5 PARETO ──────────────────────────────────────────────────────── */
+(function(){
+  const custPct=[1.52,3.03,4.55,6.06,7.58,9.09,10.61,12.12,13.64,15.15,16.67,18.18,19.70,21.21,22.73,24.24,25.76,27.27,28.79,30.30,31.82,33.33,34.85,36.36,37.88,39.39,40.91,42.42,43.94,45.45,46.97,48.48,50.00,51.52,53.03,54.55,56.06,57.58,59.09,60.61,62.12,63.64,65.15,66.67,68.18,69.70,71.21,72.73,74.24,75.76,77.27,78.79,80.30,81.82,83.33,84.85,86.36,87.88,89.39,90.91,92.42,93.94,95.45,96.97,98.48,100.00];
+  const cumRev=[6.97,13.53,19.98,25.60,30.74,35.62,40.38,45.12,49.62,53.89,58.04,60.94,63.43,65.84,68.21,70.58,72.82,74.88,76.75,78.61,80.39,81.99,83.59,85.03,86.41,87.72,88.86,89.85,90.74,91.54,92.29,93.04,93.72,94.33,94.88,95.29,95.71,96.08,96.45,96.81,97.16,97.50,97.82,98.00,98.16,98.31,98.45,98.59,98.72,98.84,98.94,99.04,99.14,99.24,99.33,99.41,99.49,99.57,99.64,99.71,99.78,99.83,99.88,99.93,99.97,100.00];
+  mk('c2-pareto',{
+    type:'line',
+    data:{labels:custPct.map(v=>v.toFixed(0)+'%'),datasets:[
+      {label:'Cumulative Revenue %',data:cumRev,borderColor:ACC,backgroundColor:ACC+'11',tension:.2,pointRadius:0,fill:true},
+      {label:'Perfect Equality',data:custPct,borderColor:'#444',borderDash:[4,4],pointRadius:0}
+    ]},
+    options:{...DEFAULTS,
+      scales:{
+        x:{grid:{color:GRID},ticks:{color:TICK,font:{size:9,family:"'JetBrains Mono',monospace"},maxTicksLimit:8,callback:(v,i)=>custPct[i]%20===0||custPct[i]<5?custPct[i].toFixed(0)+'%':''}},
+        y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'}}
+      }
+    }
+  });
+})();
+
+/* ── 3.1 OTDR BY STATE ───────────────────────────────────────────────── */
+(function(){
+  const raw=[['Andhra Pradesh',1,100],['Assam',1,100],['Chhattisgarh',1,100],['Delhi',8,75],['Goa',1,100],['Gujarat',5,80],['Haryana',1,100],['Himachal Pradesh',1,100],['Jharkhand',1,100],['Karnataka',7,100],['Kerala',7,57.14],['Maharashtra',10,100],['Odisha',4,50],['Puducherry',1,100],['Punjab',3,100],['Rajasthan',4,25],['Tamil Nadu',11,81.82],['Telangana',2,100],['Uttar Pradesh',5,100],['West Bengal',7,100]];
+  const filtered=raw.filter(r=>r[1]>1).sort((a,b)=>a[2]-b[2]);
+  mk('c3-otdr',{
+    type:'bar',
+    data:{
+      labels:filtered.map(r=>r[0]),
+      datasets:[{label:'OTDR %',data:filtered.map(r=>r[2]),backgroundColor:filtered.map(r=>r[2]<60?RED+'cc':r[2]<85?'#fbbf24cc':GREEN+'cc'),borderRadius:3}]
+    },
+    options:{...DEFAULTS,indexAxis:'y',
+      plugins:{...DEFAULTS.plugins,legend:{display:false}},
+      scales:{
+        x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},min:0,max:110},
+        y:{grid:{display:false},ticks:{color:'#ccc',font:{size:10,family:"'JetBrains Mono',monospace"}}}
+      }
+    }
+  });
+})();
+
+/* ── 3.2 OTDR BY SELLER TIER ─────────────────────────────────────────── */
+mk('c3-seller-otdr',{
+  type:'bar',
+  data:{
+    labels:['Elite','Preferred','Standard'],
+    datasets:[
+      {label:'OTDR %',data:[86.84,78.95,85.71],backgroundColor:ACC+'cc',borderRadius:4,yAxisID:'y'},
+      {label:'Avg Dispatch Days',data:[1.36,2.60,2.80],backgroundColor:BLUE+'88',borderRadius:4,yAxisID:'y2'}
+    ]
+  },
+  options:{...DEFAULTS,scales:{
+    x:{grid:{color:GRID},ticks:{color:TICK,font:{size:11,family:"'JetBrains Mono',monospace"}}},
+    y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},position:'left',min:0,max:110},
+    y2:{grid:{display:false},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'d'},position:'right',min:0,max:5}
+  }}
+});
+
+/* ── 3.3 PAYMENT FAILURE ─────────────────────────────────────────────── */
+mk('c3-payment',{
+  type:'bar',
+  data:{
+    labels:['HDFC Net Banking','Razorpay Debit','Razorpay Credit','GPay UPI','Paytm UPI','COD','ICICI Net','SBI Net'],
+    datasets:[{
+      label:'Failure Rate %',
+      data:[33.33,22.22,3.70,0,0,0,0,0],
+      backgroundColor:d=>d.raw>0?RED+'cc':GREEN+'55',
+      borderRadius:4
+    }]
+  },
+  options:{...DEFAULTS,
+    plugins:{...DEFAULTS.plugins,legend:{display:false}},
+    scales:{
+      x:{grid:{color:GRID},ticks:{color:TICK,font:{size:9,family:"'JetBrains Mono',monospace"},maxRotation:30}},
+      y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},max:40}
+    }
+  }
+});
+
+/* ── 3.4 FULFILMENT FUNNEL ───────────────────────────────────────────── */
+mk('c3-funnel',{
+  type:'line',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul'],
+    datasets:[
+      {label:'Confirmation Rate %',data:[100,100,76.92,100,100,100,100],borderColor:GREEN,backgroundColor:'transparent',tension:.3,pointRadius:4,pointBackgroundColor:GREEN},
+      {label:'Delivery Rate %',data:[100,100,76.92,100,100,100,100],borderColor:BLUE,backgroundColor:'transparent',tension:.3,pointRadius:4,pointBackgroundColor:BLUE,borderDash:[5,3]},
+      {label:'Return Rate %',data:[0,7.14,0,6.25,13.33,7.69,0],borderColor:RED,backgroundColor:RED+'11',tension:.3,pointRadius:4,pointBackgroundColor:RED,fill:true}
+    ]
+  },
+  options:{...DEFAULTS,scales:{
+    x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}}},
+    y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},min:0,max:110}
+  }}
+});
+
+/* ── 3.5 COD vs PREPAID ──────────────────────────────────────────────── */
+mk('c3-cod',{
+  type:'bar',
+  data:{
+    labels:['COD','Prepaid'],
+    datasets:[
+      {label:'Return Rate %',data:[16.67,4.05],backgroundColor:RED+'cc',borderRadius:4,yAxisID:'y'},
+      {label:'AOV (₹)',data:[3568,30762],backgroundColor:BLUE+'88',borderRadius:4,yAxisID:'y2'}
+    ]
+  },
+  options:{...DEFAULTS,scales:{
+    x:{grid:{color:GRID},ticks:{color:TICK,font:{size:12,family:"'JetBrains Mono',monospace"}}},
+    y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},position:'left',title:{display:true,text:'Return Rate %',color:TICK,font:{size:10}}},
+    y2:{grid:{display:false},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+fmt(v)},position:'right',title:{display:true,text:'AOV (₹)',color:TICK,font:{size:10}}}
+  }}
+});
+
+/* ── 4.1 CAC ─────────────────────────────────────────────────────────── */
+mk('c4-cac',{
+  type:'bar',
+  data:{
+    labels:['Paid Search','Social','Email'],
+    datasets:[{
+      label:'CAC (₹)',data:[1.00,0.44,0.05],
+      backgroundColor:[RED+'aa',ACC+'aa',GREEN+'aa'],borderRadius:4
+    }]
+  },
+  options:{...DEFAULTS,
+    plugins:{...DEFAULTS.plugins,legend:{display:false}},
+    scales:{
+      x:{grid:{color:GRID},ticks:{color:TICK,font:{size:11,family:"'JetBrains Mono',monospace"}}},
+      y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+v}}
+    }
+  }
+});
+
+/* ── 4.2 EMAIL FUNNEL ────────────────────────────────────────────────── */
+mk('c4-email',{
+  type:'bar',
+  data:{
+    labels:['Beauty Restock Alert','Diwali Sale 2024','Win-Back Campaign Feb'],
+    datasets:[
+      {label:'Open Rate %',data:[66.67,60.00,80.00],backgroundColor:ACC+'cc',borderRadius:3},
+      {label:'CTR %',data:[50.00,83.33,50.00],backgroundColor:BLUE+'99',borderRadius:3},
+      {label:'Purchase Conv %',data:[0,0,0],backgroundColor:GREEN+'66',borderRadius:3}
+    ]
+  },
+  options:{...DEFAULTS,scales:{
+    x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},maxRotation:10}},
+    y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},max:100}
+  }}
+});
+
+/* ── 4.3 SESSION PERFORMANCE ─────────────────────────────────────────── */
+(function(){
+  const data=[
+    {src:'instagram/social',rps:49055,br:0,cr:60},
+    {src:'direct/none',rps:37771,br:0,cr:76.47},
+    {src:'email/campaign',rps:18834,br:0,cr:88.89},
+    {src:'facebook/social',rps:26712,br:0,cr:66.67},
+    {src:'affiliate/cpa',rps:15140,br:0,cr:90},
+    {src:'google/organic',rps:2450,br:0,cr:93.75},
+    {src:'sms/campaign',rps:1215,br:85.71,cr:14.29},
+    {src:'google/cpc',rps:861,br:29.41,cr:64.71},
+    {src:'push/app',rps:0,br:100,cr:0}
+  ].sort((a,b)=>b.rps-a.rps);
+  mk('c4-session',{
+    type:'bar',
+    data:{
+      labels:data.map(d=>d.src),
+      datasets:[{label:'Revenue / Session (₹)',data:data.map(d=>d.rps),backgroundColor:data.map(d=>d.rps>20000?ACC+'dd':d.rps>5000?BLUE+'99':d.rps===0?RED+'66':PURPLE+'88'),borderRadius:3}]
+    },
+    options:{...DEFAULTS,
+      plugins:{...DEFAULTS.plugins,legend:{display:false}},
+      scales:{
+        x:{grid:{color:GRID},ticks:{color:TICK,font:{size:9,family:"'JetBrains Mono',monospace"},maxRotation:35}},
+        y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+fmt(v)}}
+      }
+    }
+  });
+})();
+
+/* ── 4.4 CAMPAIGN ROI ────────────────────────────────────────────────── */
+(function(){
+  const data=[
+    {name:'Google Remarketing Q1',roi:1705429},
+    {name:'Meta Fashion Campaign',roi:477808},
+    {name:'Beauty Restock Alert',roi:-100},
+    {name:'Cart Abandonment Nov',roi:-100},
+    {name:'Diwali Sale 2024',roi:-100},
+    {name:'Republic Day Sale',roi:-100},
+    {name:'Win-Back Campaign Feb',roi:-100}
+  ].sort((a,b)=>b.roi-a.roi);
+  mk('c4-roi',{
+    type:'bar',
+    data:{
+      labels:data.map(d=>d.name),
+      datasets:[{label:'ROI %',data:data.map(d=>d.roi),backgroundColor:data.map(d=>d.roi>0?ACC+'cc':RED+'88'),borderRadius:3}]
+    },
+    options:{...DEFAULTS,
+      plugins:{...DEFAULTS.plugins,legend:{display:false}},
+      scales:{
+        x:{grid:{color:GRID},ticks:{color:TICK,font:{size:9,family:"'JetBrains Mono',monospace"},maxRotation:30}},
+        y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v>1000?fmt(v)+'%':v+'%'}}
+      }
+    }
+  });
+})();
+
+/* ── 5.1 SELLER SCORECARD ────────────────────────────────────────────── */
+(function(){
+  const data=[
+    {id:'S1',score:90,q:1},{id:'S2',score:85,q:1},{id:'S8',score:85,q:1},{id:'S6',score:85,q:1},
+    {id:'S11',score:85,q:2},{id:'S17',score:85,q:2},{id:'S21',score:75,q:2},
+    {id:'S23',score:65,q:3},{id:'S24',score:65,q:3},{id:'S3',score:65,q:3},
+    {id:'S22',score:65,q:4},{id:'S7',score:60,q:4},{id:'S4',score:40,q:4}
+  ];
+  const qColor={1:GREEN+'cc',2:ACC+'cc',3:'#fbbf24cc',4:RED+'cc'};
+  mk('c5-scorecard',{
+    type:'bar',
+    data:{
+      labels:data.map(d=>d.id),
+      datasets:[{label:'Composite Score',data:data.map(d=>d.score),backgroundColor:data.map(d=>qColor[d.q]),borderRadius:3}]
+    },
+    options:{...DEFAULTS,
+      plugins:{...DEFAULTS.plugins,legend:{display:false}},
+      scales:{
+        x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}}},
+        y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}},max:110}
+      }
+    }
+  });
+})();
+
+/* ── 5.2 TOP/BOTTOM SELLERS TABLE ────────────────────────────────────── */
+(function(){
+  const data=[
+    ['elite',1,'₹10,31,931',1,4],['elite',21,'₹4,57,085',2,3],['elite',22,'₹19,759',3,2],['elite',2,'₹12,825',4,1],
+    ['preferred',4,'₹87,398',1,3],['preferred',3,'₹28,418',2,2],['preferred',17,'₹18,492',3,1],
+    ['standard',11,'₹2,80,504',1,6],['standard',6,'₹40,499',2,5],['standard',7,'₹32,665',3,4],
+    ['standard',8,'₹9,071',4,3],['standard',24,'₹7,289',5,2],['standard',23,'₹2,478',6,1]
+  ];
+  const t=document.getElementById('t5-sellers');
+  t.innerHTML=`<thead><tr><th>Tier</th><th>Seller ID</th><th>GMV</th><th>Top Rank</th><th>Bottom Rank</th></tr></thead><tbody>${
+    data.map(r=>`<tr><td class="accent">${r[0]}</td><td>${r[1]}</td><td class="num">${r[2]}</td><td class="num ${r[3]<=1?'green':''}">${r[3]}</td><td class="num ${r[4]<=1?'red':''}">${r[4]}</td></tr>`).join('')
+  }</tbody>`;
+})();
+
+/* ── 5.3 REPEAT PURCHASE RATE ────────────────────────────────────────── */
+mk('c5-repeat',{
+  type:'bar',
+  data:{
+    labels:['Electronics','Beauty','Fashion','Grocery','Home'],
+    datasets:[{
+      label:'Repeat Purchase Rate %',
+      data:[6.25,0,0,0,0],
+      backgroundColor:[ACC+'cc',PURPLE+'55',BLUE+'55',GREEN+'55',RED+'55'],
+      borderRadius:4
+    }]
+  },
+  options:{...DEFAULTS,
+    plugins:{...DEFAULTS.plugins,legend:{display:false}},
+    scales:{
+      x:{grid:{color:GRID},ticks:{color:TICK,font:{size:11,family:"'JetBrains Mono',monospace"}}},
+      y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>v+'%'},max:15}
+    }
+  }
+});
+
+/* ── 5.4 NEW vs ESTABLISHED ──────────────────────────────────────────── */
+(function(){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul'];
+  const est=[806358,191477,165246,189194,220984,125453,10499];
+  const nw=[143537,34198,33613,56691,12465,38699,0];
+  mk('c5-newvest',{
+    type:'bar',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'Established Sellers',data:est,backgroundColor:ACC+'99',borderRadius:3,stack:'s'},
+        {label:'New Sellers',data:nw,backgroundColor:BLUE+'88',borderRadius:3,stack:'s'}
+      ]
+    },
+    options:{...DEFAULTS,scales:{
+      x:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"}},stacked:true},
+      y:{grid:{color:GRID},ticks:{color:TICK,font:{size:10,family:"'JetBrains Mono',monospace"},callback:v=>'₹'+fmt(v)},stacked:true}
+    }}
+  });
+})();
+
+/* ── NAV ACTIVE STATE ────────────────────────────────────────────────── */
+window.addEventListener('scroll',()=>{
+  const secs=['home','p1','p2','p3','p4','p5','sandbox'];
+  const links=document.querySelectorAll('.nav-links a');
+  let curr='home';
+  secs.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&window.scrollY>=el.offsetTop-100)curr=id;
+  });
+  links.forEach(a=>{
+    a.classList.toggle('active',a.getAttribute('href')==='#'+curr);
+  });
+});
+
+/* ── SQL TOGGLE ──────────────────────────────────────────────────────── */
+function toggleSQL(btn){
+  btn.classList.toggle('open');
+  const block=btn.nextElementSibling;
+  block.classList.toggle('open');
+}
+
+/* ── SANDBOX ─────────────────────────────────────────────────────────── */
+let sbType='table';
+let sbChart=null;
+let sbParsed=null;
+
+function setSbType(btn,type){
+  document.querySelectorAll('.sb-type').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  sbType=type;
+  // show/hide column pickers for chart types
+  const pickers=document.getElementById('sb-col-pickers');
+  if(sbParsed&&type!=='table') buildColPickers(sbParsed.meta.fields,sbParsed.data);
+  if(type==='table'){pickers.style.display='none';}
+  else if(sbParsed){pickers.style.display='flex';}
+}
+
+function buildColPickers(cols,rows){
+  const pickers=document.getElementById('sb-col-pickers');
+  pickers.style.display='flex';
+  pickers.style.flexDirection='column';
+  // label col
+  const lSel=document.getElementById('sb-label-col');
+  lSel.innerHTML=cols.map(c=>`<option value="${c}">${c}</option>`).join('');
+  // auto-pick first non-numeric col as label
+  const firstStr=cols.find(c=>typeof rows[0][c]==='string')||cols[0];
+  lSel.value=firstStr;
+  // value cols — checkboxes for each numeric col
+  const numCols=cols.filter(c=>typeof rows[0][c]==='number');
+  const vDiv=document.getElementById('sb-value-cols');
+  vDiv.innerHTML=numCols.map((c,i)=>`<label class="sb-val-check"><input type="checkbox" value="${c}" ${i<3?'checked':''}> ${c}</label>`).join('');
+}
+
+function renderSandbox(){
+  const csv=document.getElementById('sandbox-input').value.trim();
+  const msg=document.getElementById('sandbox-msg');
+  if(!csv){msg.textContent='Paste CSV data above first.';return;}
+  const result=Papa.parse(csv,{header:true,skipEmptyLines:true,dynamicTyping:true});
+  if(!result.data||!result.data.length){msg.textContent='Could not parse CSV.';return;}
+  sbParsed=result;
+  const cols=result.meta.fields;
+  const rows=result.data;
+  msg.textContent=`${rows.length} row${rows.length!==1?'s':''} · ${cols.length} col${cols.length!==1?'s':''} · parsed`;
+
+  if(sbType==='table'){
+    renderSbTable(cols,rows);
+  } else {
+    buildColPickers(cols,rows);
+    document.getElementById('sb-col-pickers').style.display='flex';
+    renderSbChart(cols,rows);
+  }
+}
+
+function renderSbTable(cols,rows){
+  document.getElementById('sb-chart-wrap').style.display='none';
+  const isNum=v=>typeof v==='number';
+  document.getElementById('sb-table-wrap').innerHTML=`<table><thead><tr>${
+    cols.map(c=>`<th>${c}</th>`).join('')
+  }</tr></thead><tbody>${
+    rows.map(r=>`<tr>${cols.map(c=>`<td${isNum(r[c])?' style="text-align:right;font-family:var(--font-mono)"':''}>${r[c]??''}</td>`).join('')}</tr>`).join('')
+  }</tbody></table>`;
+}
+
+function renderSbChart(cols,rows){
+  // get selected label col
+  const labelCol=document.getElementById('sb-label-col').value||cols[0];
+  // get checked value cols
+  const checkedBoxes=[...document.querySelectorAll('#sb-value-cols input:checked')].map(i=>i.value);
+  const numCols=checkedBoxes.length?checkedBoxes:cols.filter(c=>c!==labelCol&&typeof rows[0][c]==='number').slice(0,3);
+  if(!numCols.length){document.getElementById('sandbox-msg').textContent='No numeric columns detected.';return;}
+
+  const labels=rows.map(r=>String(r[labelCol]??''));
+  const palette=[ACC,BLUE,GREEN,RED,PURPLE,'#fbbf24','#e879f9'];
+
+  const datasets=numCols.map((col,i)=>({
+    label:col,
+    data:rows.map(r=>Number(r[col])||0),
+    backgroundColor:palette[i%palette.length]+(sbType==='line'?'33':'99'),
+    borderColor:palette[i%palette.length],
+    borderWidth:sbType==='line'?2:0,
+    borderRadius:sbType!=='line'?4:0,
+    fill:sbType==='line'&&i===0,
+    tension:.3,
+    pointRadius:sbType==='line'?3:0,
+    stack:sbType==='stacked'?'s':undefined
+  }));
+
+  // destroy old
+  if(sbChart){sbChart.destroy();sbChart=null;}
+  document.getElementById('sb-table-wrap').innerHTML='';
+  const wrap=document.getElementById('sb-chart-wrap');
+  wrap.style.display='block';
+  const ctx=document.getElementById('sb-canvas');
+
+  const isHoriz=sbType==='hbar';
+  const isPie=sbType==='pie';
+
+  const chartType=isPie?'pie':(sbType==='line'?'line':'bar');
+
+  const pieData={labels,datasets:[{data:rows.map(r=>Number(r[numCols[0]])||0),backgroundColor:labels.map((_,i)=>palette[i%palette.length]+'cc'),borderWidth:0}]};
+
+  sbChart=new Chart(ctx,{
+    type:chartType,
+    data:isPie?pieData:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      indexAxis:isHoriz?'y':'x',
+      plugins:{
+        legend:{labels:{color:'#a0a0a0',font:{family:"'JetBrains Mono',monospace",size:11},boxWidth:12,padding:12}},
+        tooltip:{backgroundColor:'#1e1e1e',borderColor:'#333',borderWidth:1,titleColor:'#f0f0f0',bodyColor:'#a0a0a0',padding:10}
+      },
+      scales:isPie?{}:{
+        x:{grid:{color:GRID},ticks:{color:TICK,font:{family:"'JetBrains Mono',monospace",size:10}},stacked:sbType==='stacked'},
+        y:{grid:{color:GRID},ticks:{color:TICK,font:{family:"'JetBrains Mono',monospace",size:10}},stacked:sbType==='stacked'}
+      }
+    }
+  });
+}
+
+// re-render chart when column pickers change
+document.addEventListener('change',e=>{
+  if(e.target.closest('#sb-col-pickers')&&sbParsed&&sbType!=='table'){
+    renderSbChart(sbParsed.meta.fields,sbParsed.data);
+  }
+});
+
+function clearSandbox(){
+  document.getElementById('sandbox-input').value='';
+  document.getElementById('sb-table-wrap').innerHTML='';
+  document.getElementById('sb-chart-wrap').style.display='none';
+  document.getElementById('sandbox-msg').textContent='';
+  document.getElementById('sb-col-pickers').style.display='none';
+  if(sbChart){sbChart.destroy();sbChart=null;}
+  sbParsed=null;
+}
+</script>
+</body>
+</html>
